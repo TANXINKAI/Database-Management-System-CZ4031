@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stack>
 using namespace std;
 int MAX = 3;
 
@@ -21,6 +22,9 @@ public:
 class BPTree
 {
     Node *root;
+    int height; // height of tree, n = Max = 3
+    int no_nodes; // number of nodes in the tree
+
     void insertInternal(int, Node *, Node *);
     void removeInternal(int, Node *, Node *);
     Node *findParent(Node *, Node *);
@@ -33,11 +37,12 @@ public:
     void remove(int);
     void display(Node *);
     Node *getRoot();
+    int count_nodes(Node *, int);
 };
 Node::Node()
 {
-    key = new int[MAX];
-    ptr = new Node *[MAX + 1];
+    key = new int[MAX];   // creating an array of length N/Max (Each node should have N keys)
+    ptr = new Node *[MAX + 1];   // Whats the purpose of this? i thought the keys within the same node is in an array... if use ptr, shouldnt key = new Node[MAX] or smth?
 }
 BPTree::BPTree()
 {
@@ -50,7 +55,7 @@ void BPTree::insert(int x)
         root = new Node;
         root->key[0] = x;
         root->IS_LEAF = true;
-        root->size = 1;
+        root->size = 1; // size of root node = 1
     }
     else
     {
@@ -83,11 +88,11 @@ void BPTree::insert(int x)
                 cursor->key[j] = cursor->key[j - 1];
             }
             cursor->key[i] = x;
-            cursor->size++;
+            cursor->size++;   // Increase size of Node after each "insertion" to the key array
             cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
             cursor->ptr[cursor->size - 1] = NULL;
         }
-        else
+        else // If current cursor node size == N/Max Keys in Node
         {
             Node *newLeaf = new Node;
             int virtualNode[MAX + 1];
@@ -129,7 +134,7 @@ void BPTree::insert(int x)
             }
             else
             {
-                insertInternal(newLeaf->key[0], parent, newLeaf);
+                insertInternal(newLeaf->key[0], parent, newLeaf); // create a new internal node in B+ tree
             }
         }
     }
@@ -164,11 +169,11 @@ void BPTree::search(int x)
         {
             if (cursor->key[i] == x)
             {
-                cout << "Found\n";
+                cout << " Found\n";
                 return;
             }
         }
-        cout << "Not found\n";
+        cout << " Not found\n";
     }
 }
 // Ranged Search operation
@@ -208,19 +213,19 @@ void BPTree::rangequery(int lb, int hb)
                         return;
                     }
                     {
-                        cout << cursor->key[j] << "Found\n";
+                        cout << cursor->key[j] << " Found\n";
                     }
-                    
+
                 }
                 return;
             }
         }
-        cout << "Not found\n";
+        cout << " Not found\n";
     }
 }
-void BPTree::insertInternal(int x, Node *cursor, Node *child)
+void BPTree::insertInternal(int x, Node *cursor, Node *child) // insert a new internal node in B+ tree
 {
-    if (cursor->size < MAX)
+    if (cursor->size < MAX) // Mainly to update the Keys in parent's node
     {
         int i = 0;
         while (x > cursor->key[i] && i < cursor->size)
@@ -240,25 +245,25 @@ void BPTree::insertInternal(int x, Node *cursor, Node *child)
     else
     {
         Node *newInternal = new Node;
-        int virtualKey[MAX + 1];
+        int virtualKey[MAX + 1];  // temp key array. Will have N + 1 keys, need to split
         Node *virtualPtr[MAX + 2];
-        for (int i = 0; i < MAX; i++)
+        for (int i = 0; i < MAX; i++) // (For Loop) is for Left sub tree?
         {
             virtualKey[i] = cursor->key[i];
         }
-        for (int i = 0; i < MAX + 1; i++)
+        for (int i = 0; i < MAX + 1; i++) // (For Loop) is for Left sub tree?
         {
             virtualPtr[i] = cursor->ptr[i];
         }
         int i = 0, j;
         while (x > virtualKey[i] && i < MAX)
             i++;
-        for (int j = MAX + 1; j > i; j--)
+        for (int j = MAX + 1; j > i; j--)  // (For Loop) is for Right sub tree?
         {
             virtualKey[j] = virtualKey[j - 1];
         }
         virtualKey[i] = x;
-        for (int j = MAX + 2; j > i + 1; j--)
+        for (int j = MAX + 2; j > i + 1; j--) // (For Loop) is for Right sub tree?
         {
             virtualPtr[j] = virtualPtr[j - 1];
         }
@@ -266,15 +271,15 @@ void BPTree::insertInternal(int x, Node *cursor, Node *child)
         newInternal->IS_LEAF = false;
         cursor->size = (MAX + 1) / 2;
         newInternal->size = MAX - (MAX + 1) / 2;
-        for (i = 0, j = cursor->size + 1; i < newInternal->size; i++, j++)
+        for (i = 0, j = cursor->size + 1; i < newInternal->size; i++, j++) // Assigning Left Sub tree? WHat about right sub tree?
         {
             newInternal->key[i] = virtualKey[j];
         }
-        for (i = 0, j = cursor->size + 1; i < newInternal->size + 1; i++, j++)
+        for (i = 0, j = cursor->size + 1; i < newInternal->size + 1; i++, j++) // Assigning Left Sub tree? WHat about right sub tree?
         {
             newInternal->ptr[i] = virtualPtr[j];
         }
-        if (cursor == root)
+        if (cursor == root) // Need somewhere to Update the Height and Number of Nodes in B+ tree
         {
             Node *newRoot = new Node;
             newRoot->key[0] = cursor->key[cursor->size];
@@ -284,7 +289,7 @@ void BPTree::insertInternal(int x, Node *cursor, Node *child)
             newRoot->size = 1;
             root = newRoot;
         }
-        else
+        else // Update the parent Node's key
         {
             insertInternal(cursor->key[cursor->size], findParent(root, cursor), newInternal);
         }
@@ -631,4 +636,17 @@ void BPTree::display(Node *cursor)
 Node *BPTree::getRoot()
 {
     return root;
+}
+
+// Not sure why it is not working
+int BPTree::count_nodes(Node *cursor , int counts) {
+    ++counts;
+    if (!cursor->IS_LEAF)
+    {
+        for (int i = 0 ;i < cursor->size; i++)
+        {
+            count_nodes(cursor->ptr[i], counts);
+        }
+    }
+    return counts;
 }
