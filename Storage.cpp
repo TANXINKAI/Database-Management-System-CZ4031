@@ -126,7 +126,7 @@ MovieInfo Storage::getMovieInfoAt(int block, int offset) {
 
 	unsigned char* targetBlock = (unsigned char*)this->blocks[block];
 	MovieInfo mi;
-	unsigned char* data = &targetBlock[offset * mi.getSerializedLength()];
+	unsigned char* data = &targetBlock[offset * mi.getSerializedLength() + 5];
 	mi.deserialize(&mi, data);
 	return mi;
 }
