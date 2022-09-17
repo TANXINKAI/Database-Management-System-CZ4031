@@ -20,6 +20,7 @@ public:
 	~Storage();
 	void ctor(size_t blockSize, size_t storageSize, bool ignoreOrphanedBytes);
 	size_t getUsedStorageSize();
+	int getBlockCount();
 	double getStorageSize(ENUM_STORAGE_SCALE type);
 
 	intptr_t * insertMovieInfo(MovieInfo mi);

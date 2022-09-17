@@ -27,6 +27,10 @@ Storage::~Storage()
 	freeAllBlocks();
 }
 
+int Storage::getBlockCount() {
+	return this->blockCount;
+}
+
 size_t Storage::getUsedStorageSize() {
 	size_t total = 0;
 
@@ -57,11 +61,14 @@ intptr_t* Storage::createBlock() {
 		throw std::exception("Unable to create new data as disk capacity has surpassed threshold");
 
 	this->blockCount++;
-	intptr_t* block = (intptr_t*)malloc(this->blockSize);
+	unsigned char* block = (unsigned char*)malloc(this->blockSize);
 	memset(block, 0, this->blockSize);
 
+	int recordOffset = 1;
+	memcpy(block + 1, &recordOffset, sizeof(int));
+
 	if (blocks == nullptr)
-		this->blocks = (intptr_t*)malloc(sizeof(intptr_t *));
+		this->blocks = (intptr_t*)malloc(sizeof(intptr_t *) * (storageSize/blockSize));
 	else {
 		intptr_t* ptr = (intptr_t*)realloc(this->blocks, sizeof(intptr_t *) * blockCount);
 		if (!ptr)
@@ -74,26 +81,42 @@ intptr_t* Storage::createBlock() {
 		std::cout << "Created new block at " << std::hex << (intptr_t)block << ".\nTotal block count: " << std::to_string(blockCount) << "\nBlock index address: " << std::hex << this->blocks << "\n";
 	}
 
-	return block;
+	//Static 5 byte offset for block header
+	return (intptr_t*)(block + 5);
 }
 
 intptr_t* Storage::getNextAvailableSpaceInBlock(unsigned char* block, unsigned int sizePerRecord) {
-	for (int recordOffset = 0; recordOffset < floor(this->blockSize / sizePerRecord); recordOffset++) {
+	if (block[0] == 1) //First byte of block indicates that the block is full.
+		return nullptr;
+
+	unsigned char* avail = (unsigned char*)malloc(sizeof(int));
+	memcpy(avail, block + 1, 4);
+	int recordOffset = *(int*)avail;
+	free(avail);
+	//Look through to get first available spot
+	for (recordOffset; recordOffset < floor(this->blockSize / sizePerRecord); recordOffset++) {
 		bool empty = true;
 		int offset = 0;
 		for (int i = 0; i < sizePerRecord; i++) {
-			if (block[(recordOffset * sizePerRecord) + i] != 0)
+			// Static 5 byte offset for block header
+			if (block[(recordOffset * sizePerRecord) + i + 5] != 0)
 			{
 				empty = false;
 				break;
 			}
 		}
 
-		if (empty)
-			return (intptr_t*)&block[(recordOffset * sizePerRecord)];
+		if (empty) {
+			if (recordOffset == floor(this->blockSize / sizePerRecord) - 1)
+				block[0] = 1;
+			int newOffset = recordOffset + 1;
+			memcpy(block + 1, &newOffset, sizeof(int));
+			//Static 5 byte offset for block header
+			return (intptr_t*)&block[(recordOffset * sizePerRecord) + 5];
+		}
 	}
-
 	//No space in this block
+	//Set full byte to true
 	return nullptr;
 }
 
@@ -113,11 +136,7 @@ intptr_t* Storage::insertMovieInfo(MovieInfo mi) {
 
 	//Loop through all existing blocks and find available space
 	if (this->blockCount != 0)
-		for (int i = 0; i < this->blockCount; i++) {
-			availableSpace = (unsigned char *)this->getNextAvailableSpaceInBlock((unsigned char*)this->blocks[i], mi.getSerializedLength());
-			if (availableSpace != nullptr)
-				break;
-		}
+		availableSpace = (unsigned char *)this->getNextAvailableSpaceInBlock((unsigned char*)this->blocks[blockCount-1], mi.getSerializedLength());
 
 	//No available space available (No existing blocks with allowance for new record)
 	if (availableSpace == nullptr)
