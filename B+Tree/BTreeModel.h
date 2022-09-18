@@ -249,7 +249,7 @@ void BPTree::insertInternal(int x, Node *cursor, Node *child) // insert a new in
 			i++;
 		for (int j = cursor->size + 1; j > i; j--)
 		{
-			if(j > i && j < cursor->size)
+			if(j > i && j <= cursor->size)
 				cursor->key[j] = cursor->key[j - 1];
 			cursor->ptr[j] = cursor->ptr[j-1];
 		}
