@@ -18,27 +18,22 @@ void Storage::ctor(size_t blockSize, size_t storageSize, bool ignoreOrphanedByte
 		throw std::invalid_argument("Storage size is not a multiple of blocksize (orphaned bytes).\nUse overload Storage(size_t,size_t,bool) to ignore");
 	this->blockSize = blockSize;
 	this->storageSize = storageSize;
-	this->blockCount = 0;
-	this->blocks = nullptr;
+	this->blockManager = BlockManager(this->verbose, blockSize);
 }
 
 Storage::~Storage()
 {
-	freeAllBlocks();
-}
-
-int Storage::getBlockCount() {
-	return this->blockCount;
+	this->blockManager.freeAllBlocks();
 }
 
 size_t Storage::getUsedStorageSize() {
 	size_t total = 0;
 
 	// Total size of blocks allocated
-	total += (this->blockCount * this->blockSize);
+	total += (this->blockManager.getBlockCount() * this->blockSize);
 
 	// Total size of block index
-	total += (sizeof(intptr_t) * blockCount);
+	total += (sizeof(intptr_t) * this->blockManager.getBlockCount());
 
 
 	//TODO: Total size of B+ tree?
@@ -51,8 +46,8 @@ double Storage::getStorageSize(ENUM_STORAGE_SCALE type) {
 	return retVal;
 }
 
-intptr_t* Storage::createBlock() {
-	if (this->blockCount + 1 > (this->storageSize / this->blockSize))
+unsigned char* Storage::createBlock() {
+	if (this->blockManager.getBlockCount() + 1 > (this->storageSize / this->blockSize))
 		throw std::exception("Unable to create new blocks as block capacity has been reached");
 
 
@@ -60,106 +55,54 @@ intptr_t* Storage::createBlock() {
 	if (this->storageSize - this->getUsedStorageSize() < 2*blockSize)
 		throw std::exception("Unable to create new data as disk capacity has surpassed threshold");
 
-	this->blockCount++;
-	unsigned char* block = (unsigned char*)malloc(this->blockSize);
-	memset(block, 0, this->blockSize);
-
-	int recordOffset = 1;
-	memcpy(block + 1, &recordOffset, sizeof(int));
-
-	if (blocks == nullptr)
-		this->blocks = (intptr_t*)malloc(sizeof(intptr_t *) * (storageSize/blockSize));
-	else {
-		intptr_t* ptr = (intptr_t*)realloc(this->blocks, sizeof(intptr_t *) * blockCount);
-		if (!ptr)
-			throw std::exception("Unable to reallocate space for block index array");
-		this->blocks = ptr;
-	}
-	this->blocks[this->blockCount - 1] = (intptr_t)block;
-
-	if (this->verbose) {
-		std::cout << "Created new block at " << std::hex << (intptr_t)block << ".\nTotal block count: " << std::to_string(blockCount) << "\nBlock index address: " << std::hex << this->blocks << "\n";
-	}
-
-	//Static 5 byte offset for block header
-	return (intptr_t*)(block + 5);
+	return this->blockManager.createBlock();
 }
 
-intptr_t* Storage::getNextAvailableSpaceInBlock(unsigned char* block, unsigned int sizePerRecord) {
-	if (block[0] == 1) //First byte of block indicates that the block is full.
+unsigned char* Storage::getNextAvailableSpaceInBlock(unsigned char* block, unsigned int sizePerRecord) {
+	this->blockManager.parse(&this->blockManager, block, this->blockSize);
+
+	if (this->blockManager.isFull())
 		return nullptr;
 
-	unsigned char* avail = (unsigned char*)malloc(sizeof(int));
-	memcpy(avail, block + 1, 4);
-	int recordOffset = *(int*)avail;
-	free(avail);
-	//Look through to get first available spot
-	for (recordOffset; recordOffset < floor(this->blockSize / sizePerRecord); recordOffset++) {
-		bool empty = true;
-		int offset = 0;
-		for (int i = 0; i < sizePerRecord; i++) {
-			// Static 5 byte offset for block header
-			if (block[(recordOffset * sizePerRecord) + i + 5] != 0)
-			{
-				empty = false;
-				break;
-			}
-		}
+	int recordOffset = this->blockManager.getRecordsCount();
 
-		if (empty) {
-			if (recordOffset == floor(this->blockSize / sizePerRecord) - 1)
-				block[0] = 1;
-			int newOffset = recordOffset + 1;
-			memcpy(block + 1, &newOffset, sizeof(int));
-			//Static 5 byte offset for block header
-			return (intptr_t*)&block[(recordOffset * sizePerRecord) + 5];
-		}
-	}
-	//No space in this block
-	//Set full byte to true
-	return nullptr;
+	return this->blockManager.getRecordSpaceAt(recordOffset);
 }
 
 MovieInfo Storage::getMovieInfoAt(int block, int offset) {
-	if (block >= this->blockCount || block < 0) 
+	if (block >= this->blockManager.getBlockCount() || block < 0)
 		throw std::exception("Block does not exist");
 
-	unsigned char* targetBlock = (unsigned char*)this->blocks[block];
-	MovieInfo mi;
-	unsigned char* data = &targetBlock[offset * mi.getSerializedLength() + 5];
-	mi.deserialize(&mi, data);
-	return mi;
+	unsigned char* targetBlock = (unsigned char*)this->blockManager.getBlock(block);
+	this->blockManager.parse(&this->blockManager, targetBlock, this->blockSize);
+
+	return this->blockManager.getMovieInfoAt(offset);
 }
 
-intptr_t* Storage::insertMovieInfo(MovieInfo mi) {
+unsigned char* Storage::insertMovieInfo(MovieInfo mi) {
 	unsigned char* availableSpace = nullptr;
-
+	int blockCount = this->blockManager.getBlockCount();
 	//Loop through all existing blocks and find available space
-	if (this->blockCount != 0)
-		availableSpace = (unsigned char *)this->getNextAvailableSpaceInBlock((unsigned char*)this->blocks[blockCount-1], mi.getSerializedLength());
+	if (blockCount != 0) {
+		availableSpace = (unsigned char*)this->blockManager.getBlock(blockCount - 1);
 
+		this->blockManager.parse(&this->blockManager, availableSpace, this->blockSize);
+		if (this->blockManager.isFull())
+			availableSpace = nullptr;
+	}
 	//No available space available (No existing blocks with allowance for new record)
 	if (availableSpace == nullptr)
 		availableSpace = (unsigned char*)this->createBlock();
 
-	//Write data onto available space
-	unsigned char* data = mi.serialize();
-	for (int i = 0; i < mi.getSerializedLength(); i++) {
-		availableSpace[i] = data[i];
-	}
-	free(data);
+
+	this->blockManager.parse(&this->blockManager, availableSpace, this->blockSize);
+
+	unsigned char* addressWritten = this->blockManager.insertMovieInfoAt(mi);
 
 	if (this->verbose) {
-		std::cout << "Wrote " << std::to_string(mi.getSerializedLength()) << " bytes to address at " << std::hex << (intptr_t)availableSpace << "\n";
+		if (addressWritten)
+			std::cout << "Wrote " << std::to_string(mi.getSerializedLength()) << " bytes to address at " << std::hex << (intptr_t)addressWritten << "\n";
 	}
 
-	return (intptr_t *)availableSpace;
-}
-
-
-void Storage::freeAllBlocks() {
-	for (int i = 0; i < this->blockCount; i++) {
-		free((void *)this->blocks[i]);
-	}
-	free(this->blocks);
+	return availableSpace;
 }
