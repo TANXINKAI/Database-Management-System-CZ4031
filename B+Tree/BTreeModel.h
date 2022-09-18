@@ -46,7 +46,10 @@ public:
 Node::Node()
 {
 	key = new int[MAX];   // creating an array of length N/Max (Each node should have N keys)
-	ptr = new Node *[MAX+2];   // Whats the purpose of this? i thought the keys within the same node is in an array... if use ptr, shouldnt key = new Node[MAX] or smth?
+	ptr = new Node *[MAX+1];   // Whats the purpose of this? i thought the keys within the same node is in an array... if use ptr, shouldnt key = new Node[MAX] or smth?
+	//MAX + 1 because MAX = number of keys. Pointer count = number of keys + 1. Hence MAX + 1
+	for (int i = 0; i < MAX + 1; i++) //Initialize all ptrs to nullptr. Uninitialized pointers are problematic when trying to check for validity.
+		ptr[i] = nullptr;
 }
 BPTree::BPTree()
 {
@@ -96,9 +99,9 @@ void BPTree::insert(int x)
 			cursor->size++;   // Increase size of Node after each "insertion" to the key array
 
 
-			//Austin: Lol what does this even do. Assigning empty pointers to other empty pointers
-			//cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
-			//cursor->ptr[cursor->size - 1] = NULL;
+			//Shift pointer right by 1 (for inserting keys that are sandwiched in between pointers)
+			cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
+			cursor->ptr[cursor->size - 1] = nullptr;
 		}
 		else // If current cursor node size == N/Max Keys in Node
 		{
@@ -117,13 +120,16 @@ void BPTree::insert(int x)
 			}
 			virtualNode[i] = x;
 			newLeaf->IS_LEAF = true;
-			cursor->size = (MAX + 1) / 2;
 			newLeaf->size = MAX + 1 - (MAX + 1) / 2;
-			cursor->ptr[cursor->size] = newLeaf;
 
-			// Austin: ? cursor->ptr[MAX] isn't the pointer pointing to next leaf, not sure what this is for.
-			//newLeaf->ptr[newLeaf->size] = cursor->ptr[MAX];
-			//cursor->ptr[MAX] = NULL;
+			// Point the new leaf's last pointer to the right siblings last pointer
+			if(cursor->ptr[cursor->size] != nullptr && cursor->ptr[cursor->size]->ptr[cursor->ptr[MAX]->size] != nullptr)
+				newLeaf->ptr[newLeaf->size] = cursor->ptr[cursor->size]->ptr[cursor->ptr[MAX]->size];
+
+			cursor->size = (MAX + 1) / 2;
+			cursor->ptr[cursor->size] = newLeaf;
+			
+			cursor->ptr[MAX] = nullptr;
 			for (i = 0; i < MAX + 1; i++)
 			{
 				if(i < cursor->size)
@@ -241,11 +247,11 @@ void BPTree::insertInternal(int x, Node *cursor, Node *child) // insert a new in
 		int i = 0;
 		while (x > cursor->key[i] && i < cursor->size)
 			i++;
-		for (int j = cursor->size; j > i + 1; j--)
+		for (int j = cursor->size + 1; j > i; j--)
 		{
-			if(j < i)
+			if(j > i && j < cursor->size)
 				cursor->key[j] = cursor->key[j - 1];
-			cursor->ptr[j] = cursor->ptr[j - 1];
+			cursor->ptr[j] = cursor->ptr[j-1];
 		}
 		cursor->key[i] = x;
 		cursor->size++;
@@ -256,6 +262,8 @@ void BPTree::insertInternal(int x, Node *cursor, Node *child) // insert a new in
 		Node *newInternal = new Node;
 		int virtualKey[MAX + 1];  // temp key array. Will have N + 1 keys, need to split
 		Node *virtualPtr[MAX + 2];
+		for (int i = 0; i < MAX + 1; i++)
+			virtualPtr[i] = nullptr;
 		for (int i = 0; i < MAX + 2; i++) // (For Loop) is for Left sub tree? (Austin: No, this is for cloning the entire cursor key and pointers into virtualKey and virtualPtr respectively)
 		{
 			if(i < MAX)
