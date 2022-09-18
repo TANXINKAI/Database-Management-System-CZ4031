@@ -42,7 +42,7 @@ size_t Storage::getUsedStorageSize() {
 }
 
 double Storage::getStorageSize(ENUM_STORAGE_SCALE type) {
-	double retVal = this->storageSize / (2 << type);
+	double retVal = this->storageSize / (1 << type);
 	return retVal;
 }
 
