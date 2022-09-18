@@ -5,6 +5,8 @@
 #include <iostream>
 #include <sstream>
 #include <stack>
+#include <string>
+#include <vector>
 using namespace std;
 const int MAX = 3;
 
@@ -22,7 +24,8 @@ public:
 class BPTree
 {
 	Node *root;
-	int height; // height of tree, n = Max = 3
+	int keyCount = 0;
+	int height = 0; // height of tree, n = Max = 3
 	int no_nodes; // number of nodes in the tree
 
 	void insertInternal(int, Node *, Node *);
@@ -36,13 +39,14 @@ public:
 	void insert(int);
 	void remove(int);
 	void display(Node *);
+	void display(Node *, int, vector<string>*);
 	Node *getRoot();
 	int count_nodes(Node *);
 };
 Node::Node()
 {
 	key = new int[MAX];   // creating an array of length N/Max (Each node should have N keys)
-	ptr = new Node *[MAX + 1];   // Whats the purpose of this? i thought the keys within the same node is in an array... if use ptr, shouldnt key = new Node[MAX] or smth?
+	ptr = new Node *[MAX+2];   // Whats the purpose of this? i thought the keys within the same node is in an array... if use ptr, shouldnt key = new Node[MAX] or smth?
 }
 BPTree::BPTree()
 {
@@ -50,12 +54,14 @@ BPTree::BPTree()
 }
 void BPTree::insert(int x)
 {
+	this->keyCount++;
 	if (root == nullptr)
 	{
 		root = new Node;
 		root->key[0] = x;
 		root->IS_LEAF = true;
 		root->size = 1; // size of root node = 1
+		this->height = 1;
 	}
 	else
 	{
@@ -135,6 +141,7 @@ void BPTree::insert(int x)
 				newRoot->IS_LEAF = false;
 				newRoot->size = 1;
 				root = newRoot;
+				this->height++;
 			}
 			else
 			{
@@ -272,7 +279,7 @@ void BPTree::insertInternal(int x, Node *cursor, Node *child) // insert a new in
 		cursor->size = (MAX + 1) / 2;
 		newInternal->size = MAX - (MAX + 1) / 2;
 
-		for (i = 0, j = cursor->size + 1; i < newInternal->size + 2; i++, j++) // Assigning Left Sub tree? WHat about right sub tree? (Austin: This is for creating internal node, there is no left/right tree. See line 284)
+		for (i = 0, j = cursor->size + 1; i < newInternal->size + 2; i++, j++) // Assigning Left Sub tree? WHat about right sub tree? (Austin: This is for creating internal node, there is no left/right tree. See next 2 comments)
 		{
 			if(i < newInternal->size)
 				newInternal->key[i] = virtualKey[j];
@@ -288,6 +295,7 @@ void BPTree::insertInternal(int x, Node *cursor, Node *child) // insert a new in
 			newRoot->IS_LEAF = false;
 			newRoot->size = 1;
 			root = newRoot;
+			this->height++;
 		}
 		else // Update the parent Node's key
 		{
@@ -617,19 +625,38 @@ void BPTree::removeInternal(int x, Node *cursor, Node *child)
 }
 void BPTree::display(Node *cursor)
 {
+	//Create a vector (array) of strings. 1 for each height of B+ tree
+	vector<string> lines;
+	for (int i = 0; i < this->height; i++)
+		lines.push_back(""); 
+	display(cursor, 0, &lines);
+
+	//Best effort beautify print of each level
+	for (int i = 0; i < this->height; i++) {
+		for (int z = this->height - i - 1; z > 0; z--)
+			cout << "            ";
+		cout << lines[i] << endl;
+	}
+}
+
+void BPTree::display(Node *cursor, int level, vector<string>* txtOutput)
+{
 	for (int i = 0; i < cursor->size; i++)
 	{
-		cout << cursor->key[i] << " ";
+		(*txtOutput)[level] = (*txtOutput)[level].append(to_string(cursor->key[i]) + " ");
 	}
-	cout << "\n";
+	(*txtOutput)[level] = (*txtOutput)[level].append("    ");
+
 	if (cursor->IS_LEAF != true)
 	{
 		for (int i = 0; i < cursor->size + 1; i++)
 		{
-			display(cursor->ptr[i]);
+			display(cursor->ptr[i],level + 1,txtOutput);
+			(*txtOutput)[level] = (*txtOutput)[level].append("    ");
 		}
 	}
 }
+
 Node *BPTree::getRoot()
 {
 	return root;
