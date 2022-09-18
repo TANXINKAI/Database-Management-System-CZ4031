@@ -49,6 +49,8 @@ public:
 
 	MovieInfo getMovieInfoAt(int offset) {
 		MovieInfo mi;
+		if (offset >= this->freeRecordOffset)
+			throw std::exception("Record does not exist");
 		unsigned char* data = &this->blockData[offset * mi.getSerializedLength() + HEADER_LENGTH];
 		mi.deserialize(&mi, data);
 		return mi;

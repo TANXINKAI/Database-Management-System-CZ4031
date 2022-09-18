@@ -15,6 +15,7 @@ enum ENUM_STORAGE_SCALE {
 class Storage
 {
 public:
+	bool verbose = false;
 	BlockManager blockManager;
 
 	Storage(size_t blockSize, size_t storageSize);
@@ -30,8 +31,6 @@ public:
 private:
 	size_t blockSize;
 	size_t storageSize;
-
-	bool verbose = false;
 
 	unsigned char * createBlock();
 	unsigned char* getNextAvailableSpaceInBlock(unsigned char * block, unsigned int sizePerRecord);
