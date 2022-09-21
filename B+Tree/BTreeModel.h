@@ -54,6 +54,7 @@ class BPTree
 
 public:
 
+	BPTree();
 	BPTree(int n);
 	void search(int);
 	void rangequery(int, int);
@@ -65,6 +66,8 @@ public:
 	int count_nodes(Node *);
 	int getTreeOrder();
 	int getHeight();
+
+	Storage* storage = nullptr;
 };
 Node::Node()
 {
@@ -81,6 +84,8 @@ BPTree::BPTree(int n)
 	root = nullptr;
 	MAX = n;
 }
+BPTree::BPTree()
+{}
 void BPTree::insert(int x, int block, int offset)
 {
 	this->keyCount++;
@@ -210,15 +215,27 @@ void BPTree::insert(int x, int block, int offset)
 // Search operation
 void BPTree::search(int x)
 {
+	vector<string> contents;
+	int nodesAccessed = 1;
 	if (root == nullptr)
 	{
-		cout << "Tree is empty\n";
+		std::cout << "Tree is empty\n";
 	}
 	else
 	{
 		Node *cursor = root;
 		while (cursor->IS_LEAF == false)
 		{
+			nodesAccessed += 1;
+			string strKeys = "";
+			int* keys = cursor->getKeys();
+			double rating = 0.0;
+			for (int i = 0; i < cursor->size; i++) {
+				rating += storage->getMovieInfoAt(cursor->addressBlock[i], cursor->addressOffset[i]).getRating();
+				strKeys.append(to_string(keys[i]) + " ");
+			}
+			strKeys.append("(Average rating: " + to_string(rating / cursor->size) + ")");
+			contents.push_back(strKeys);
 			for (int i = 0; i < cursor->size; i++)
 			{
 				if (x < cursor->key[i])
@@ -233,29 +250,66 @@ void BPTree::search(int x)
 				}
 			}
 		}
+		string strKeys = "";
+		int* keys = cursor->getKeys();
+		double rating = 0.0;
+		for (int i = 0; i < cursor->size; i++) {
+			rating += storage->getMovieInfoAt(cursor->addressBlock[i], cursor->addressOffset[i]).getRating();
+			strKeys.append(to_string(keys[i]) + " ");
+		}
+		strKeys.append("(Average rating: " + to_string(rating / cursor->size) + ")");
+		contents.push_back(strKeys);
+		std::cout << to_string(nodesAccessed) << " nodes accessed during search for key '" << to_string(x) << "'" << endl;
+		for (int i = 0; i < (nodesAccessed > 5 ? 5 : nodesAccessed); i++) {
+			std::cout << "Node " << to_string(i + 1) << " keys: " << contents[i] << endl;
+		}
+
 		for (int i = 0; i < cursor->size; i++)
 		{
 			if (cursor->key[i] == x)
 			{
-				cout << " Found\n";
+				std::cout << "Found key " << to_string(x) << endl;
 				return;
 			}
 		}
-		cout << " Not found\n";
+		std::cout << "Could not find key " << to_string(x) << endl;
 	}
 }
 // Ranged Search operation
+//TODO: Fix this range query something is wrong, it shouldn't be found / not found. Needs to return all found nodes or similar
 void BPTree::rangequery(int lb, int hb)
 {
+	vector<string> contents;
+	vector<int> blocksAccessedList;
+	int nodesAccessed = 1;
 	if (root == nullptr)
 	{
-		cout << "Tree is empty\n";
+		std::cout << "Tree is empty\n";
 	}
 	else
 	{
 		Node *cursor = root;
 		while (cursor->IS_LEAF == false)
 		{
+			nodesAccessed += 1;
+			string strKeys = "";
+			int* keys = cursor->getKeys();
+			double rating = 0.0;
+			for (int i = 0; i < cursor->size; i++) {
+				rating += storage->getMovieInfoAt(cursor->addressBlock[i], cursor->addressOffset[i]).getRating();
+				bool unique = true;
+				for (int j = 0; j < blocksAccessedList.size(); j++)
+					if (blocksAccessedList[j] == cursor->addressBlock[i])
+					{
+						unique = false;
+						break;
+					}
+				if (unique)
+					blocksAccessedList.push_back(cursor->addressBlock[i]);
+				strKeys.append(to_string(keys[i]) + " ");
+			}
+			strKeys.append("(Average rating: " + to_string(rating / cursor->size) + ")");
+			contents.push_back(strKeys);
 			for (int i = 0; i < cursor->size; i++)
 			{
 				if (lb < cursor->key[i])
@@ -270,6 +324,30 @@ void BPTree::rangequery(int lb, int hb)
 				}
 			}
 		}
+		string strKeys = "";
+		int* keys = cursor->getKeys();
+		double rating = 0.0;
+		for (int i = 0; i < cursor->size; i++) {
+			rating += storage->getMovieInfoAt(cursor->addressBlock[i], cursor->addressOffset[i]).getRating();
+			bool unique = true;
+			for (int j = 0; j < blocksAccessedList.size(); j++)
+				if (blocksAccessedList[j] == cursor->addressBlock[i])
+				{
+					unique = false;
+					break;
+				}
+			if (unique)
+				blocksAccessedList.push_back(cursor->addressBlock[i]);
+			strKeys.append(to_string(keys[i]) + " ");
+		}
+		strKeys.append("(Average rating: " + to_string(rating / cursor->size) + ")");
+		contents.push_back(strKeys);
+		std::cout << to_string(nodesAccessed) << " nodes accessed during search for key in range ('" << to_string(lb) << "','" << to_string(hb) << "')" << endl;
+		std::cout << to_string(blocksAccessedList.size()) << " blocks accessed during search for key in range ('" << to_string(lb) << "','" << to_string(hb) << "')" << endl;
+		for (int i = 0; i < (nodesAccessed > 5 ? 5 : nodesAccessed); i++) {
+			std::cout << "Node " << to_string(i + 1) << " keys: " << contents[i] << endl;
+		}
+
 		for (int i = 0; i < cursor->size; i++)
 		{
 			if (cursor->key[i] == lb)
@@ -281,14 +359,14 @@ void BPTree::rangequery(int lb, int hb)
 						return;
 					}
 					{
-						cout << cursor->key[j] << " Found\n";
+						std::cout << cursor->key[j] << " Found\n";
 					}
 
 				}
 				return;
 			}
 		}
-		cout << " Not found\n";
+		std::cout << " Not found\n";
 	}
 }
 void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *child) // insert a new internal node in B+ tree
@@ -346,8 +424,8 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 		}
 
 		virtualKey[i] = x;
-		virtualBlock[i] = x;
-		virtualOffset[i] = x;
+		virtualBlock[i] = block;
+		virtualOffset[i] = offset;
 		virtualPtr[i + 1] = child;
 		newInternal->IS_LEAF = false;
 		cursor->size = (MAX + 1) / 2;
@@ -410,7 +488,7 @@ void BPTree::remove(int x)
 {
 	if (root == nullptr)
 	{
-		cout << "Tree empty\n";
+		std::cout << "Tree empty\n";
 	}
 	else
 	{
@@ -450,7 +528,7 @@ void BPTree::remove(int x)
 		}
 		if (!found)
 		{
-			cout << "Not found\n";
+			std::cout << "Not found\n";
 			return;
 		}
 		for (int i = pos; i < cursor->size; i++)
@@ -466,7 +544,7 @@ void BPTree::remove(int x)
 			}
 			if (cursor->size == 0)
 			{
-				cout << "Tree died\n";
+				std::cout << "Tree died\n";
 				delete[] cursor->key;
 				delete[] cursor->ptr;
 				delete cursor;
@@ -545,7 +623,7 @@ void BPTree::remove(int x)
 			cursor->ptr[cursor->size] = nullptr;
 			cursor->size += rightNode->size;
 			cursor->ptr[cursor->size] = rightNode->ptr[rightNode->size];
-			cout << "Merging two leaf nodes\n";
+			std::cout << "Merging two leaf nodes\n";
 			removeInternal(parent->key[rightSibling - 1], parent, rightNode);
 			delete[] rightNode->key;
 			delete[] rightNode->ptr;
@@ -568,7 +646,7 @@ void BPTree::removeInternal(int x, Node *cursor, Node *child)
 				delete[] cursor->key;
 				delete[] cursor->ptr;
 				delete cursor;
-				cout << "Changed root node\n";
+				std::cout << "Changed root node\n";
 				return;
 			}
 			else if (cursor->ptr[0] == child)
@@ -580,7 +658,7 @@ void BPTree::removeInternal(int x, Node *cursor, Node *child)
 				delete[] cursor->key;
 				delete[] cursor->ptr;
 				delete cursor;
-				cout << "Changed root node\n";
+				std::cout << "Changed root node\n";
 				return;
 			}
 		}
@@ -714,8 +792,8 @@ void BPTree::display(Node *cursor)
 	//Best effort beautify print of each level
 	for (int i = 0; i < this->height; i++) {
 		for (int z = this->height - i - 1; z > 0; z--)
-			cout << "            ";
-		cout << lines[i] << endl;
+			std::cout << "            ";
+		std::cout << lines[i] << endl;
 	}
 }
 
