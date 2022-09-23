@@ -27,18 +27,19 @@ void parseData(int limit);
 
 int main()
 {
-	//testTree();
-
+	if(false){ //Set to true to run testTree() only
+		storage->verbose = true;
+		testTree();
+		sampleRetrieve();
+		return 0;
+	}
 	parseData(0);
 	buildIndex();
-	
 	experiment1();
 	experiment2();
 	experiment3();
 	experiment4();
 	experiment5();
-
-	//sampleRetrieve();
 }
 
 void buildIndex() {
@@ -48,18 +49,18 @@ void buildIndex() {
 	tree.storage = storage;
 	int dataCount = 0;
 	for (int i = 0; i < storage->blockManager.getBlockCount(); i++) {
-		for (int j = 0; j < tree.getTreeOrder(); j++) {
+		for (int j = 0; j < tree.getTreeOrder() + 1; j++) {
 			MovieInfo mi;
 			try {
 				mi = storage->getMovieInfoAt(i, j);
 				tree.insert(mi.getVotes(), i, j);
+				dataCount++;
 			}
 			catch (exception& message) {
 				//Can safely ignore, only exception thrown is when record is not found lol when trying to access empty block + offset
 				if (storage->verbose)
 					std::cout << message.what() << endl;
 			}
-			dataCount++;
 			if (dataCount % 50000 == 0)
 				std::cout << to_string(dataCount) << " records indexed." << endl;
 
@@ -100,7 +101,7 @@ void experiment2() {
 
 void experiment3() {
 	std::cout << endl << "(Experiment 3)" << endl;
-	tree.search(4505);
+	tree.search(33858);
 }
 
 void experiment4() {
@@ -140,9 +141,13 @@ void testTree() {
 	node.insert(28, 0, 4);
 	node.insert(20, 0, 3);
 	node.insert(18, 0, 3);
+	node.display(node.getRoot());
+	std::cout << endl << endl;
+	node.insert(40, 0, 3);
+	
 
 	node.display(node.getRoot());
-
+	std::cout << endl << endl;
 	int counts;
 	counts = node.count_nodes(node.getRoot());
 	std::cout << "Number of Nodes: " << counts << "\n";
@@ -150,7 +155,6 @@ void testTree() {
 	node.search(15);
 	node.remove(15);
 
-	node.display(node.getRoot());
 }
 
 void sampleRetrieve() {
@@ -205,14 +209,15 @@ void parseData(int limit) {
 				}
 				MovieInfo mi(tconst, stod(rating), stoi(votes));
 				storage->insertMovieInfo(mi);
+				dataCount++;
 			}
-			dataCount++;
-
-			if (dataCount % 50000 == 0)
+			if (dataCount % 50000 == 0 && dataCount != 0)
 				std::cout << to_string(dataCount) << " records inserted." << endl;
 		}
 		file.close();
 		auto timeEnd = high_resolution_clock::now();
+		if(dataCount < 50000)
+			std::cout << to_string(dataCount) << " records inserted." << endl;
 		std::cout << "Data insertion of " << to_string(dataCount) << " records completed in " << to_string(duration_cast<milliseconds>(timeEnd - timeStart).count()) << " milliseconds" << endl << endl;
 
 	}

@@ -99,10 +99,10 @@ void BPTree::insert(int x, int block, int offset)
 		root->IS_LEAF = true;
 		root->size = 1; // size of root node = 1
 		this->height = 1;
-	}
+			}
 	else
 	{
-		Node *cursor = root;
+				Node *cursor = root;
 		Node *parent = nullptr;
 		while (!cursor->IS_LEAF)
 		{
@@ -121,19 +121,19 @@ void BPTree::insert(int x, int block, int offset)
 				}
 			}
 		}
-		if (cursor->size < MAX)
+				if (cursor->size < MAX)
 		{
-			int i = 0;
+						int i = 0;
 			while (x > cursor->key[i] && i < cursor->size) //Set i to idx of first idx with val higher than x
 				i++;
 
-			for (int j = cursor->size; j > i; j--) //Shift all keys larger than x to the right by 1
+			for (int j = cursor->size; j > i && j > 0; j--) //Shift all keys larger than x to the right by 1
 			{
 				cursor->key[j] = cursor->key[j - 1];
 				cursor->addressBlock[j] = cursor->addressBlock[j - 1];
 				cursor->addressOffset[j] = cursor->addressOffset[j - 1];
 			}
-			cursor->key[i] = x;
+						cursor->key[i] = x;
 			cursor->addressBlock[i] = block;
 			cursor->addressOffset[i] = offset;
 			cursor->size++;   // Increase size of Node after each "insertion" to the key array
@@ -145,31 +145,31 @@ void BPTree::insert(int x, int block, int offset)
 		}
 		else // If current cursor node size == N/Max Keys in Node
 		{
-			Node *newLeaf = new Node;
-			int* virtualNode = new int[MAX + 1];
-			int* virtualNodeBlock = new int[MAX + 1];
-			int* virtualNodeOffset = new int[MAX + 1];
-			for (int i = 0; i < MAX; i++)
+						Node *newLeaf = new Node;
+						int* virtualNode = new int[MAX + 1];
+						int* virtualNodeBlock = new int[MAX + 1];
+						int* virtualNodeOffset = new int[MAX + 1];
+						for (int i = 0; i < cursor->size; i++)
 			{
 				virtualNode[i] = cursor->key[i];
 				virtualNodeBlock[i] = cursor->addressBlock[i];
 				virtualNodeOffset[i] = cursor->addressOffset[i];
 			}
-			int i = 0;
+						int i = 0, j;
 			while (x > virtualNode[i] && i < MAX)
 				i++;
-			for (int j = MAX; j > i; j--)
+			for (int j = MAX; j > i && j > 0; j--)
 			{
 				virtualNode[j] = virtualNode[j - 1];
-				virtualNodeBlock[j] = cursor->addressBlock[j - 1];
-				virtualNodeOffset[j] = cursor->addressOffset[j - 1];
+				virtualNodeBlock[j] = virtualNodeBlock[j - 1];
+				virtualNodeOffset[j] = virtualNodeOffset[j - 1];
 			}
-			virtualNode[i] = x;
+						virtualNode[i] = x;
 			virtualNodeBlock[i] = block;
 			virtualNodeOffset[i] = offset;
 			newLeaf->IS_LEAF = true;
 			newLeaf->size = MAX + 1 - (MAX + 1) / 2;
-
+			
 			// Point the new leaf's last pointer to the right siblings last pointer
 			if (cursor->ptr[cursor->size] != nullptr && cursor->ptr[cursor->size]->ptr[cursor->ptr[MAX]->size] != nullptr)
 				newLeaf->ptr[newLeaf->size] = cursor->ptr[cursor->size]->ptr[cursor->ptr[MAX]->size];
@@ -177,7 +177,7 @@ void BPTree::insert(int x, int block, int offset)
 			cursor->size = (MAX + 1) / 2;
 			cursor->ptr[cursor->size] = newLeaf;
 
-			cursor->ptr[MAX] = nullptr;
+						cursor->ptr[MAX] = nullptr;
 			for (i = 0; i < MAX + 1; i++)
 			{
 				if (i < cursor->size) {
@@ -191,14 +191,11 @@ void BPTree::insert(int x, int block, int offset)
 					newLeaf->addressBlock[i - cursor->size] = virtualNodeBlock[i];
 					newLeaf->addressOffset[i - cursor->size] = virtualNodeOffset[i];
 				}
+				
 			}
-			free(virtualNodeBlock);
-			free(virtualNodeOffset);
-			free(virtualNode);
-
-			if (cursor == root)
+						if (cursor == root)
 			{
-				Node *newRoot = new Node;
+								Node *newRoot = new Node;
 				newRoot->key[0] = newLeaf->key[0];
 				newRoot->addressBlock[0] = newLeaf->addressBlock[0];
 				newRoot->addressOffset[0] = newLeaf->addressOffset[0];
@@ -211,9 +208,12 @@ void BPTree::insert(int x, int block, int offset)
 			}
 			else
 			{
-				insertInternal(newLeaf->key[0], newLeaf->addressBlock[0], newLeaf->addressOffset[0], parent, newLeaf); // create a new internal node in B+ tree
+								insertInternal(newLeaf->key[0], newLeaf->addressBlock[0], newLeaf->addressOffset[0], parent, newLeaf); // create a new internal node in B+ tree
 			}
-		}
+						free(virtualNode);
+			free(virtualNodeBlock);
+			free(virtualNodeOffset);
+					}
 	}
 }
 // Search operation
@@ -235,7 +235,6 @@ void BPTree::search(int x)
 			int* keys = cursor->getKeys();
 			double rating = 0.0;
 			for (int i = 0; i < cursor->size; i++) {
-				cout << "block: " << to_string(cursor->addressBlock[i]) << ", offset: " << to_string(cursor->addressOffset[i]) << endl;
 				rating += storage->getMovieInfoAt(cursor->addressBlock[i], cursor->addressOffset[i]).getRating();
 				strKeys.append(to_string(keys[i]) + " ");
 			}
@@ -376,21 +375,21 @@ void BPTree::rangequery(int lb, int hb)
 }
 void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *child) // insert a new internal node in B+ tree
 {
-	if (cursor->size < MAX) // Mainly to update the Keys in parent's node
+		if (cursor->size < MAX) // Mainly to update the Keys in parent's node
 	{
 		int i = 0;
-		while (x > cursor->key[i] && i < cursor->size)
+				while (x > cursor->key[i] && i < cursor->size)
 			i++;
 		for (int j = cursor->size + 1; j > i; j--)
 		{
-			if (j > i && j < MAX) {
+			if (j > i && j <= cursor->size) {
 				cursor->key[j] = cursor->key[j - 1];
 				cursor->addressBlock[j] = cursor->addressBlock[j - 1];
 				cursor->addressOffset[j] = cursor->addressOffset[j - 1];
 			}
 			cursor->ptr[j] = cursor->ptr[j - 1];
 		}
-		cursor->key[i] = x;
+				cursor->key[i] = x;
 		cursor->addressBlock[i] = block;
 		cursor->addressOffset[i] = offset;
 		cursor->size++;
@@ -398,35 +397,35 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 	}
 	else
 	{
-		Node *newInternal = new Node;
+				Node *newInternal = new Node;
 		int* virtualKey = new int[MAX + 1];  // temp key array. Will have N + 1 keys, need to split
 		int* virtualBlock = new int[MAX + 1];
 		int* virtualOffset = new int[MAX + 1];
-		Node **virtualPtr = (Node**)malloc(sizeof(Node)*(MAX + 1));
-		for (int i = 0; i < MAX + 1; i++)
+		Node **virtualPtr = (Node**)malloc(sizeof(Node)*(MAX + 2));
+		for (int i = 0; i < MAX + 2; i++)
 			virtualPtr[i] = nullptr;
-		for (int i = 0; i < MAX + 1; i++) // (For Loop) is for Left sub tree? (Austin: No, this is for cloning the entire cursor key and pointers into virtualKey and virtualPtr respectively)
+		for (int i = 0; i < cursor->size + 1; i++) // (For Loop) is for Left sub tree? (Austin: No, this is for cloning the entire cursor key and pointers into virtualKey and virtualPtr respectively)
 		{
-			if (i < MAX) {
+			if (i < cursor->size) {
 				virtualKey[i] = cursor->key[i];
 				virtualBlock[i] = cursor->addressBlock[i];
 				virtualOffset[i] = cursor->addressOffset[i];
 			}
 			virtualPtr[i] = cursor->ptr[i];
 		}
-		int i = 0, j;
+				int i = 0, j;
 		while (x > virtualKey[i] && i < MAX) //Retrieve the spot (index) of where we want to insert the key
 			i++;
 		for (int j = MAX + 1; j > i; j--) // (For Loop) is for Right sub tree? (Austin: No, this is for shifting keys and pointers to the right (of index i))
 		{
-			if (j < MAX) {
+			if (j > 0 && j <= MAX) {
 				virtualKey[j] = virtualKey[j - 1];
 				virtualBlock[j] = virtualBlock[j - 1];
 				virtualOffset[j] = virtualOffset[j - 1];
 			}
 			virtualPtr[j] = virtualPtr[j - 1];
 		}
-
+		
 		virtualKey[i] = x;
 		virtualBlock[i] = block;
 		virtualOffset[i] = offset;
@@ -435,22 +434,22 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 		cursor->size = (MAX + 1) / 2;
 		newInternal->size = MAX - (MAX + 1) / 2;
 
-		for (i = 0; i < newInternal->size + 1; i++) // Assigning Left Sub tree? WHat about right sub tree? (Austin: This is for creating internal node, there is no left/right tree. See next 2 comments)
+				for (i = 0, j = cursor->size + 1; i < newInternal->size + 1; i++, j++) // Assigning Left Sub tree? WHat about right sub tree? (Austin: This is for creating internal node, there is no left/right tree. See next 2 comments)
 		{
 			if (i < newInternal->size) {
-				newInternal->key[i] = virtualKey[i];
-				newInternal->addressBlock[i] = virtualBlock[i];
-				newInternal->addressOffset[i] = virtualOffset[i];
+				newInternal->key[i] = virtualKey[j];
+				newInternal->addressBlock[i] = virtualBlock[j ];
+				newInternal->addressOffset[i] = virtualOffset[j];
 			}
-			newInternal->ptr[i] = virtualPtr[i];
+			newInternal->ptr[i] = virtualPtr[j];
 		}
 		free(virtualKey);
 		free(virtualBlock);
 		free(virtualOffset);
 		free(virtualPtr);
-		if (cursor == root) // Need somewhere to Update the Height and Number of Nodes in B+ tree
+				if (cursor == root) // Need somewhere to Update the Height and Number of Nodes in B+ tree
 		{
-			Node *newRoot = new Node;
+						Node *newRoot = new Node;
 			newRoot->key[0] = cursor->key[cursor->size];
 			newRoot->addressBlock[0] = cursor->addressBlock[cursor->size];
 			newRoot->addressOffset[0] = cursor->addressOffset[cursor->size];
@@ -464,7 +463,7 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 		}
 		else // Update the parent Node's key
 		{
-			insertInternal(cursor->key[cursor->size], cursor->addressBlock[cursor->size], cursor->addressOffset[cursor->size], findParent(root, cursor), newInternal);
+						insertInternal(cursor->key[cursor->size], cursor->addressBlock[cursor->size], cursor->addressOffset[cursor->size], findParent(root, cursor), newInternal);
 		}
 	}
 }
