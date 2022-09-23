@@ -3,7 +3,7 @@
 #include "math.h"
 #include <iostream>
 #include <string>
-
+#include <cstring>
 
 class BlockManager {
 public:
@@ -35,7 +35,7 @@ public:
 		else {
 			intptr_t* ptr = (intptr_t*)realloc(this->blocks, sizeof(intptr_t*) * blockCount);
 			if (!ptr)
-				throw std::exception("Unable to reallocate space for block index array");
+				throw std::runtime_error("Unable to reallocate space for block index array");
 			this->blocks = ptr;
 		}
 		this->blocks[this->blockCount - 1] = (intptr_t)block;
@@ -50,7 +50,7 @@ public:
 	MovieInfo getMovieInfoAt(int offset) {
 		MovieInfo mi;
 		if (offset >= this->freeRecordOffset)
-			throw std::exception("Record does not exist");
+			throw std::runtime_error("Record does not exist");
 		unsigned char* data = &this->blockData[offset * mi.getSerializedLength() + HEADER_LENGTH];
 		mi.deserialize(&mi, data);
 		return mi;

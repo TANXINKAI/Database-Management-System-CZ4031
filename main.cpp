@@ -212,6 +212,6 @@ void parseData(int limit) {
 
 	}
 	else {
-		throw exception("Unable to open file for reading");
+		throw runtime_error("Unable to open file for reading");
 	}
 }
