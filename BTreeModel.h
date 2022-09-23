@@ -235,6 +235,7 @@ void BPTree::search(int x)
 			int* keys = cursor->getKeys();
 			double rating = 0.0;
 			for (int i = 0; i < cursor->size; i++) {
+				cout << "block: " << to_string(cursor->addressBlock[i]) << ", offset: " << to_string(cursor->addressOffset[i]) << endl;
 				rating += storage->getMovieInfoAt(cursor->addressBlock[i], cursor->addressOffset[i]).getRating();
 				strKeys.append(to_string(keys[i]) + " ");
 			}
@@ -434,14 +435,14 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 		cursor->size = (MAX + 1) / 2;
 		newInternal->size = MAX - (MAX + 1) / 2;
 
-		for (i = 0, j = cursor->size + 1; i < newInternal->size + 2; i++, j++) // Assigning Left Sub tree? WHat about right sub tree? (Austin: This is for creating internal node, there is no left/right tree. See next 2 comments)
+		for (i = 0; i < newInternal->size + 1; i++) // Assigning Left Sub tree? WHat about right sub tree? (Austin: This is for creating internal node, there is no left/right tree. See next 2 comments)
 		{
 			if (i < newInternal->size) {
-				newInternal->key[i] = virtualKey[j];
-				newInternal->addressBlock[i] = virtualBlock[j];
-				newInternal->addressOffset[i] = virtualOffset[j];
+				newInternal->key[i] = virtualKey[i];
+				newInternal->addressBlock[i] = virtualBlock[i];
+				newInternal->addressOffset[i] = virtualOffset[i];
 			}
-			newInternal->ptr[i] = virtualPtr[j];
+			newInternal->ptr[i] = virtualPtr[i];
 		}
 		free(virtualKey);
 		free(virtualBlock);
