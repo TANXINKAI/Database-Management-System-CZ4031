@@ -155,10 +155,10 @@ void BPTree::insert(int x, int block, int offset)
 				virtualNodeBlock[i] = cursor->addressBlock[i];
 				virtualNodeOffset[i] = cursor->addressOffset[i];
 			}
-			int i = 0, j;
+			int i = 0;
 			while (x > virtualNode[i] && i < MAX)
 				i++;
-			for (int j = MAX + 1; j > i; j--)
+			for (int j = MAX; j > i; j--)
 			{
 				virtualNode[j] = virtualNode[j - 1];
 				virtualNodeBlock[j] = cursor->addressBlock[j - 1];
@@ -192,6 +192,9 @@ void BPTree::insert(int x, int block, int offset)
 					newLeaf->addressOffset[i - cursor->size] = virtualNodeOffset[i];
 				}
 			}
+			free(virtualNodeBlock);
+			free(virtualNodeOffset);
+			free(virtualNode);
 
 			if (cursor == root)
 			{
@@ -379,7 +382,7 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 			i++;
 		for (int j = cursor->size + 1; j > i; j--)
 		{
-			if (j > i && j <= cursor->size) {
+			if (j > i && j < MAX) {
 				cursor->key[j] = cursor->key[j - 1];
 				cursor->addressBlock[j] = cursor->addressBlock[j - 1];
 				cursor->addressOffset[j] = cursor->addressOffset[j - 1];
@@ -398,10 +401,10 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 		int* virtualKey = new int[MAX + 1];  // temp key array. Will have N + 1 keys, need to split
 		int* virtualBlock = new int[MAX + 1];
 		int* virtualOffset = new int[MAX + 1];
-		Node **virtualPtr = (Node**)malloc(sizeof(Node)*(MAX + 2));
+		Node **virtualPtr = (Node**)malloc(sizeof(Node)*(MAX + 1));
 		for (int i = 0; i < MAX + 1; i++)
 			virtualPtr[i] = nullptr;
-		for (int i = 0; i < MAX + 2; i++) // (For Loop) is for Left sub tree? (Austin: No, this is for cloning the entire cursor key and pointers into virtualKey and virtualPtr respectively)
+		for (int i = 0; i < MAX + 1; i++) // (For Loop) is for Left sub tree? (Austin: No, this is for cloning the entire cursor key and pointers into virtualKey and virtualPtr respectively)
 		{
 			if (i < MAX) {
 				virtualKey[i] = cursor->key[i];
@@ -413,10 +416,9 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 		int i = 0, j;
 		while (x > virtualKey[i] && i < MAX) //Retrieve the spot (index) of where we want to insert the key
 			i++;
-
 		for (int j = MAX + 1; j > i; j--) // (For Loop) is for Right sub tree? (Austin: No, this is for shifting keys and pointers to the right (of index i))
 		{
-			if (i < MAX) {
+			if (j < MAX) {
 				virtualKey[j] = virtualKey[j - 1];
 				virtualBlock[j] = virtualBlock[j - 1];
 				virtualOffset[j] = virtualOffset[j - 1];
@@ -441,6 +443,9 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 			}
 			newInternal->ptr[i] = virtualPtr[j];
 		}
+		free(virtualKey);
+		free(virtualBlock);
+		free(virtualOffset);
 		free(virtualPtr);
 		if (cursor == root) // Need somewhere to Update the Height and Number of Nodes in B+ tree
 		{

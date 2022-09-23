@@ -29,9 +29,9 @@ int main()
 {
 	//testTree();
 
-
 	parseData(0);
 	buildIndex();
+	tree.display(tree.getRoot());
 
 	experiment1();
 	experiment2();
@@ -47,17 +47,23 @@ void buildIndex() {
 	auto timeStart = high_resolution_clock::now();
 	tree = BPTree(storage->blockManager.getMovieInfoPerBlock());
 	tree.storage = storage;
+	int dataCount = 0;
 	for (int i = 0; i < storage->blockManager.getBlockCount(); i++) {
 		for (int j = 0; j < tree.getTreeOrder(); j++) {
+			MovieInfo mi;
 			try {
-				MovieInfo mi = storage->getMovieInfoAt(i, j);
-				tree.insert(mi.getVotes(), i, j);
+				mi = storage->getMovieInfoAt(i, j);
 			}
 			catch (exception& message) {
 				//Can safely ignore, only exception thrown is when record is not found lol when trying to access empty block + offset
 				if (storage->verbose)
 					std::cout << message.what() << endl;
 			}
+			tree.insert(mi.getVotes(), i, j);
+			dataCount++;
+			if (dataCount % 1000 == 0)
+				std::cout << to_string(dataCount) << " records indexed." << endl;
+
 		}
 	}
 	auto timeEnd = high_resolution_clock::now();
@@ -162,7 +168,7 @@ void parseData(int limit) {
 	auto timeStart = high_resolution_clock::now();
 	int dataCount = 0;
 	fstream file;
-	file.open("D:\\Downloads\\data.tsv", ios::in);
+	file.open("C:\\Users\\woodmon122\\Desktop\\NTU\\Y3S1\\CZ4031\\trunk\\data.tsv", ios::in);
 	//file.open("C:\\Users\\austi\\source\\repos\\cz4031\\cz4031\\data.tsv", ios::in);
 	if (file.is_open()) {
 		string line;
