@@ -31,8 +31,7 @@ int main()
 
 	parseData(0);
 	buildIndex();
-	tree.display(tree.getRoot());
-
+	
 	experiment1();
 	experiment2();
 	experiment3();
