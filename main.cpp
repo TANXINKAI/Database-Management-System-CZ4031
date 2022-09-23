@@ -53,15 +53,15 @@ void buildIndex() {
 			MovieInfo mi;
 			try {
 				mi = storage->getMovieInfoAt(i, j);
+				tree.insert(mi.getVotes(), i, j);
 			}
 			catch (exception& message) {
 				//Can safely ignore, only exception thrown is when record is not found lol when trying to access empty block + offset
 				if (storage->verbose)
 					std::cout << message.what() << endl;
 			}
-			tree.insert(mi.getVotes(), i, j);
 			dataCount++;
-			if (dataCount % 1000 == 0)
+			if (dataCount % 50000 == 0)
 				std::cout << to_string(dataCount) << " records indexed." << endl;
 
 		}
