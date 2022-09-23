@@ -7,6 +7,7 @@
 #include <stack>
 #include <string>
 #include <vector>
+#include "Storage.h"
 using namespace std;
 
 int MAX = 3;

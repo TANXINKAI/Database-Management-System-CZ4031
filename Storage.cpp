@@ -48,12 +48,12 @@ double Storage::getStorageSize(ENUM_STORAGE_SCALE type) {
 
 unsigned char* Storage::createBlock() {
 	if (this->blockManager.getBlockCount() + 1 > (this->storageSize / this->blockSize))
-		throw std::exception("Unable to create new blocks as block capacity has been reached");
+		throw std::runtime_error("Unable to create new blocks as block capacity has been reached");
 
 
 	//TODO: Add some form of consideration/calculation that includes the size of B+ tree index. To check for space for index AND block
 	if (this->storageSize - this->getUsedStorageSize() < 2*blockSize)
-		throw std::exception("Unable to create new data as disk capacity has surpassed threshold");
+		throw std::runtime_error("Unable to create new data as disk capacity has surpassed threshold");
 
 	return this->blockManager.createBlock();
 }
@@ -71,7 +71,7 @@ unsigned char* Storage::getNextAvailableSpaceInBlock(unsigned char* block, unsig
 
 MovieInfo Storage::getMovieInfoAt(int block, int offset) {
 	if (block >= this->blockManager.getBlockCount() || block < 0)
-		throw std::exception("Block does not exist");
+		throw std::runtime_error("Block does not exist");
 
 	unsigned char* targetBlock = (unsigned char*)this->blockManager.getBlock(block);
 	this->blockManager.parse(&this->blockManager, targetBlock, this->blockSize);
