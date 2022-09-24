@@ -14,7 +14,7 @@ using namespace std::chrono;
 //Initialize storage instance on the heap
 //Bitshift 1 with scale of data storage
 Storage* storage = new Storage(200, 100 * (1 << ENUM_STORAGE_SCALE_MEGABYTE));
-BPTree tree = NULL;
+BplusTree tree = NULL;
 void buildIndex();
 void experiment1();
 void experiment2();
@@ -45,7 +45,7 @@ int main()
 void buildIndex() {
 	std::cout << "Building index (B+ Tree)" << endl;
 	auto timeStart = high_resolution_clock::now();
-	tree = BPTree(storage->blockManager.getMovieInfoPerBlock());
+	tree = BplusTree(storage->blockManager.getMovieInfoPerBlock());
 	tree.storage = storage;
 	int dataCount = 0;
 	for (int i = 0; i < storage->blockManager.getBlockCount(); i++) {
@@ -81,8 +81,9 @@ void experiment2() {
 	Node* root = tree.getRoot();
 	std::cout << endl << "(Experiment 2)" << endl << "Tree Parameter n: " << to_string(tree.getTreeOrder())
 		<< "\nNumber of Nodes in Tree: " << to_string(tree.count_nodes(root))
+		<< "\nMem in Tree (testing): " << to_string(tree.count_memory(root)) << " MB"
 		<< "\nTree Height: " << to_string(tree.getHeight()) << "\n\n";
-
+		
 	string rootNodeContent = "Root Node Keys: ";
 	int* rootKeys = root->getKeys();
 	for (int i = 0; i < root->getSize(); i++) {
@@ -101,7 +102,7 @@ void experiment2() {
 
 void experiment3() {
 	std::cout << endl << "(Experiment 3)" << endl;
-	tree.search(33858);
+	tree.search(500);
 }
 
 void experiment4() {
@@ -115,7 +116,7 @@ void experiment5() {
 }
 
 void testTree() {
-	BPTree node(3);
+	BplusTree node(3);
 	node.insert(5, 0, 0);
 	node.insert(15, 0, 1);
 	node.insert(25, 0, 2);
@@ -171,7 +172,8 @@ void parseData(int limit) {
 	auto timeStart = high_resolution_clock::now();
 	int dataCount = 0;
 	fstream file;
-	file.open("C:\\Users\\woodmon122\\Desktop\\NTU\\Y3S1\\CZ4031\\trunk\\data.tsv", ios::in);
+	file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
+	
 	//file.open("C:\\Users\\austi\\source\\repos\\cz4031\\cz4031\\data.tsv", ios::in);
 	if (file.is_open()) {
 		string line;
