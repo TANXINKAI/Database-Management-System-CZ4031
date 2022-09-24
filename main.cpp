@@ -107,7 +107,8 @@ void experiment3() {
 
 void experiment4() {
 	std::cout << endl << "(Experiment 4)" << endl;
-	tree.rangequery(30000, 40000);
+	// tree.rangequery(30000, 40000);
+	tree.rangequery(500, 501);
 }
 
 void experiment5() {

@@ -259,6 +259,7 @@ void BplusTree::search(int x)
 			string strKeys = "";
 			int *keys = curr->getKeys();
 			double rating = 0.0;
+
 			for (int i = 0; i < curr->size; i++)
 			{
 				rating += storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getRating();
@@ -268,7 +269,7 @@ void BplusTree::search(int x)
 			contents.push_back(strKeys);
 			for (int i = 0; i < curr->size; i++)
 			{
-				if (x < curr->key[i])
+				if (x <= curr->key[i])
 				{
 					curr = curr->ptr[i];
 					break;
@@ -296,18 +297,34 @@ void BplusTree::search(int x)
 			std::cout << "Node " << to_string(i + 1) << " keys: " << contents[i] << endl;
 		}
 
-		for (int i = 0; i < curr->size; i++)
+		// int *curr_keys = curr->getKeys();
+		// for(int c = 0; c < curr->size; c++){
+		// 	std::cout << "curr_key[c] = " << to_string(curr_keys[c]) << "\n";
+		// }
+
+		while (curr->key[0] <= x)
 		{
-			if (curr->key[i] == x)
+			for (int i = 0; i < curr->size; i++)
 			{
-				std::cout << "Found key " << to_string(x) << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i],  curr->addressOffset[i]).getTConst() << endl;
-				if(!keyFound){
-					keyFound = true;
+				std::cout << "key is : " << curr->key[i] << "\n";
+				if (curr->key[i] == x)
+				{
+					std::cout << "Found key " << to_string(x) << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << "\n";
+					std::cout << "i: " << i << "\t curr->size: " << curr->getSize() << endl;
+					if (!keyFound)
+					{
+						keyFound = true;
+					}
+					// return;
 				}
-				// return;
 			}
+			curr = curr->ptr[curr->size];
 		}
-		if (!keyFound) std::cout << "Could not find key " << to_string(x) << endl;
+
+		std::cout << "end of while loop" << endl;
+		
+		if (!keyFound)
+				std::cout << "Could not find key " << to_string(x) << endl;
 		return;
 	}
 }
@@ -350,7 +367,7 @@ void BplusTree::rangequery(int lb, int hb)
 			contents.push_back(strKeys);
 			for (int i = 0; i < curr->size; i++)
 			{
-				if (lb < curr->key[i])
+				if (lb <= curr->key[i])
 				{
 					curr = curr->ptr[i];
 					break;
@@ -388,24 +405,52 @@ void BplusTree::rangequery(int lb, int hb)
 			std::cout << "Node " << to_string(i + 1) << " keys: " << contents[i] << endl;
 		}
 
-		for (int i = 0; i < curr->size; i++)
+		// for (int i = 0; i < curr->size; i++)
+		// {
+		// 	if (curr->key[i] == lb)
+		// 	{
+		// 		for (int j = i; j < curr->size; j++)
+		// 		{
+		// 			if (curr->key[j] > hb)
+		// 			{
+		// 				return;
+		// 			}
+		// 			{
+		// 				std::cout << curr->key[j] << " Found\n";
+		// 			}
+		// 		}
+		// 		return;
+		// 	}
+		// }
+
+		bool keyFound = false;
+		while (curr->key[0] <= hb)
 		{
-			if (curr->key[i] == lb)
+			for (int i = 0; i < curr->size; i++)
 			{
-				for (int j = i; j < curr->size; j++)
+				std::cout << "key is : " << curr->key[i] << "\n";
+				if (curr->key[i] >= lb)
 				{
-					if (curr->key[j] > hb)
+					std::cout << "Found key " << curr->key[i] << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << "\n";
+					std::cout << "i: " << i << "\t curr->size: " << curr->getSize() << endl;
+					// std::cout << curr->key[i] << " Found\n";
+					if (!keyFound)
 					{
-						return;
-					}
-					{
-						std::cout << curr->key[j] << " Found\n";
+						keyFound = true;
 					}
 				}
-				return;
+				else{
+					continue;
+				}
 			}
+			curr = curr->ptr[curr->size];
+			std::cout << "new curr->key[0]: " << curr->key[0] << endl;
+			std::cout << "new curr->key[curr->size - 1]: " << curr->key[curr->size - 1] << endl;
 		}
-		std::cout << " Not found\n";
+
+		std::cout << "end of while loop" << endl;
+
+		if(!keyFound) std::cout << " Not found\n";
 	}
 }
 void BplusTree::insertInternal(int x, int block, int offset, Node *curr, Node *child) // insert a new internal node in B+ tree
@@ -529,6 +574,7 @@ Node *BplusTree::findParent(Node *curr, Node *child)
 	}
 	return parent;
 }
+
 void BplusTree::remove(int x)
 {
 	if (root == nullptr)
