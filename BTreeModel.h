@@ -15,10 +15,9 @@ class BPTree;
 class Node
 {
 	bool IS_LEAF;
-	int *key, size;
+	int size;
 	Node **ptr;
-	int *addressBlock;
-	int *addressOffset;
+	intptr_t *key;
 	friend class BPTree;
 
 public:
@@ -29,14 +28,8 @@ public:
 	int getSize() {
 		return this->size;
 	}
-	int* getKeys() {
+	intptr_t* getKeys() {
 		return this->key;
-	}
-	int* getBlocks() {
-		return this->addressBlock;
-	}
-	int* getOffsets() {
-		return this->addressOffset;
 	}
 	Node** getPointers() {
 		return this->ptr;
@@ -44,12 +37,13 @@ public:
 };
 class BPTree
 {
+	MovieInfo mi;
 	Node *root;
 	int keyCount = 0;
 	int height = 0; // height of tree, n = Max = 3
 	int no_nodes; // number of nodes in the tree
 
-	void insertInternal(int, int, int, Node *, Node *);
+	void insertInternal(intptr_t, Node *, Node *);
 	void removeInternal(int, Node *, Node *);
 	Node *findParent(Node *, Node *);
 
@@ -59,7 +53,7 @@ public:
 	BPTree(int n);
 	void search(int);
 	void rangequery(int, int);
-	void insert(int, int, int);
+	void insert(intptr_t);
 	void remove(int);
 	void display(Node *);
 	void display(Node *, int, vector<string>*);
@@ -72,13 +66,16 @@ public:
 };
 Node::Node()
 {
-	key = new int[MAX];   // creating an array of length N/Max (Each node should have N keys)
-	addressBlock = new int[MAX];
-	addressOffset = new int[MAX];
+	key = new intptr_t[MAX];   // creating an array of length N/Max (Each node should have N keys)
+
 	ptr = new Node *[MAX + 1];   // Whats the purpose of this? i thought the keys within the same node is in an array... if use ptr, shouldnt key = new Node[MAX] or smth?
 	//MAX + 1 because MAX = number of keys. Pointer count = number of keys + 1. Hence MAX + 1
 	for (int i = 0; i < MAX + 1; i++) //Initialize all ptrs to nullptr. Uninitialized pointers are problematic when trying to check for validity.
+	{	
 		ptr[i] = nullptr;
+		if(i < MAX)
+			key[i] = 0;
+	}
 }
 BPTree::BPTree(int n)
 {
@@ -87,29 +84,35 @@ BPTree::BPTree(int n)
 }
 BPTree::BPTree()
 {}
-void BPTree::insert(int x, int block, int offset)
+void BPTree::insert(intptr_t addressIn)
 {
+	MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+	mi.deserializeAt(m, addressIn);
+	int x = m->getVotes();
+	
 	this->keyCount++;
 	if (root == nullptr)
 	{
 		root = new Node;
-		root->key[0] = x;
-		root->addressBlock[0] = block;
-		root->addressOffset[0] = offset;
+		root->key[0] = addressIn;
 		root->IS_LEAF = true;
 		root->size = 1; // size of root node = 1
 		this->height = 1;
-			}
+		}
 	else
 	{
-				Node *cursor = root;
+		Node *cursor = root;
 		Node *parent = nullptr;
 		while (!cursor->IS_LEAF)
 		{
 			parent = cursor;
 			for (int i = 0; i < cursor->size; i++)
 			{
-				if (x <= cursor->key[i])
+					MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+					mi.deserializeAt(m, cursor->key[i]);
+					int c = m->getVotes();
+
+				if (x <= c)
 				{
 					cursor = cursor->ptr[i];
 					break;
@@ -121,21 +124,22 @@ void BPTree::insert(int x, int block, int offset)
 				}
 			}
 		}
-				if (cursor->size < MAX)
+		if (cursor->size < MAX)
 		{
-						int i = 0;
-			while (x > cursor->key[i] && i < cursor->size) //Set i to idx of first idx with val higher than x
+			int i = 0, c;
+			do{
+				MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+				mi.deserializeAt(m, cursor->key[i]);
+				c = m->getVotes();
+			
 				i++;
+			}while(x > c && i < cursor->size);
 
 			for (int j = cursor->size; j > i && j > 0; j--) //Shift all keys larger than x to the right by 1
 			{
 				cursor->key[j] = cursor->key[j - 1];
-				cursor->addressBlock[j] = cursor->addressBlock[j - 1];
-				cursor->addressOffset[j] = cursor->addressOffset[j - 1];
 			}
-						cursor->key[i] = x;
-			cursor->addressBlock[i] = block;
-			cursor->addressOffset[i] = offset;
+			cursor->key[i] = addressIn;
 			cursor->size++;   // Increase size of Node after each "insertion" to the key array
 
 
@@ -145,28 +149,25 @@ void BPTree::insert(int x, int block, int offset)
 		}
 		else // If current cursor node size == N/Max Keys in Node
 		{
-						Node *newLeaf = new Node;
-						int* virtualNode = new int[MAX + 1];
-						int* virtualNodeBlock = new int[MAX + 1];
-						int* virtualNodeOffset = new int[MAX + 1];
-						for (int i = 0; i < cursor->size; i++)
+			Node *newLeaf = new Node;
+			intptr_t* virtualNode = new intptr_t[MAX + 1];
+			for (int i = 0; i < cursor->size; i++)
 			{
 				virtualNode[i] = cursor->key[i];
-				virtualNodeBlock[i] = cursor->addressBlock[i];
-				virtualNodeOffset[i] = cursor->addressOffset[i];
 			}
-						int i = 0, j;
-			while (x > virtualNode[i] && i < MAX)
+			int i = 0, j, c;
+			do{
+				MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+				mi.deserializeAt(m, virtualNode[i]);
+				c = m->getVotes();
+			
 				i++;
+			} while(x > c && i < MAX);
 			for (int j = MAX; j > i && j > 0; j--)
 			{
 				virtualNode[j] = virtualNode[j - 1];
-				virtualNodeBlock[j] = virtualNodeBlock[j - 1];
-				virtualNodeOffset[j] = virtualNodeOffset[j - 1];
 			}
-						virtualNode[i] = x;
-			virtualNodeBlock[i] = block;
-			virtualNodeOffset[i] = offset;
+			virtualNode[i] = addressIn;
 			newLeaf->IS_LEAF = true;
 			newLeaf->size = MAX + 1 - (MAX + 1) / 2;
 			
@@ -182,23 +183,17 @@ void BPTree::insert(int x, int block, int offset)
 			{
 				if (i < cursor->size) {
 					cursor->key[i] = virtualNode[i];
-					cursor->addressBlock[i] = virtualNodeBlock[i];
-					cursor->addressOffset[i] = virtualNodeOffset[i];
 
 				}
 				else {
 					newLeaf->key[i - cursor->size] = virtualNode[i];
-					newLeaf->addressBlock[i - cursor->size] = virtualNodeBlock[i];
-					newLeaf->addressOffset[i - cursor->size] = virtualNodeOffset[i];
 				}
 				
 			}
 						if (cursor == root)
 			{
-								Node *newRoot = new Node;
+				Node *newRoot = new Node;
 				newRoot->key[0] = newLeaf->key[0];
-				newRoot->addressBlock[0] = newLeaf->addressBlock[0];
-				newRoot->addressOffset[0] = newLeaf->addressOffset[0];
 				newRoot->ptr[0] = cursor;
 				newRoot->ptr[1] = newLeaf;
 				newRoot->IS_LEAF = false;
@@ -208,11 +203,9 @@ void BPTree::insert(int x, int block, int offset)
 			}
 			else
 			{
-								insertInternal(newLeaf->key[0], newLeaf->addressBlock[0], newLeaf->addressOffset[0], parent, newLeaf); // create a new internal node in B+ tree
+								insertInternal(newLeaf->key[0], parent, newLeaf); // create a new internal node in B+ tree
 			}
 						free(virtualNode);
-			free(virtualNodeBlock);
-			free(virtualNodeOffset);
 					}
 	}
 }
@@ -232,17 +225,25 @@ void BPTree::search(int x)
 		{
 			nodesAccessed += 1;
 			string strKeys = "";
-			int* keys = cursor->getKeys();
+			intptr_t* keys = cursor->getKeys();
 			double rating = 0.0;
 			for (int i = 0; i < cursor->size; i++) {
-				rating += storage->getMovieInfoAt(cursor->addressBlock[i], cursor->addressOffset[i]).getRating();
-				strKeys.append(to_string(keys[i]) + " ");
+				MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+				mi.deserializeAt(m, keys[i]);
+				int c = m->getRating();
+			
+				rating += c;
+				strKeys.append(to_string(c) + " ");
 			}
 			strKeys.append("(Average rating: " + to_string(rating / cursor->size) + ")");
 			contents.push_back(strKeys);
 			for (int i = 0; i < cursor->size; i++)
 			{
-				if (x < cursor->key[i])
+				MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+				mi.deserializeAt(m, keys[i]);
+				int c = m->getRating();
+			
+				if (x < c)
 				{
 					cursor = cursor->ptr[i];
 					break;
@@ -255,11 +256,15 @@ void BPTree::search(int x)
 			}
 		}
 		string strKeys = "";
-		int* keys = cursor->getKeys();
+		intptr_t* keys = cursor->getKeys();
 		double rating = 0.0;
 		for (int i = 0; i < cursor->size; i++) {
-			rating += storage->getMovieInfoAt(cursor->addressBlock[i], cursor->addressOffset[i]).getRating();
-			strKeys.append(to_string(keys[i]) + " ");
+			MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+			mi.deserializeAt(m, keys[i]);
+			int c = m->getRating();
+		
+			rating += c;
+			strKeys.append(to_string(c) + " ");
 		}
 		strKeys.append("(Average rating: " + to_string(rating / cursor->size) + ")");
 		contents.push_back(strKeys);
@@ -270,7 +275,11 @@ void BPTree::search(int x)
 
 		for (int i = 0; i < cursor->size; i++)
 		{
-			if (cursor->key[i] == x)
+				MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+			mi.deserializeAt(m, keys[i]);
+			int c = m->getRating();
+		
+			if (c == x)
 			{
 				std::cout << "Found key " << to_string(x) << endl;
 				return;
@@ -297,19 +306,23 @@ void BPTree::rangequery(int lb, int hb)
 		{
 			nodesAccessed += 1;
 			string strKeys = "";
-			int* keys = cursor->getKeys();
+			intptr_t* keys = cursor->getKeys();
 			double rating = 0.0;
 			for (int i = 0; i < cursor->size; i++) {
-				rating += storage->getMovieInfoAt(cursor->addressBlock[i], cursor->addressOffset[i]).getRating();
+				MovieInfo* m;
+				mi.deserializeAt(m, keys[i]);
+				int c = m->getRating();
+			
+				rating += c;
 				bool unique = true;
 				for (int j = 0; j < blocksAccessedList.size(); j++)
-					if (blocksAccessedList[j] == cursor->addressBlock[i])
+					if (blocksAccessedList[j] == 1)//cursor->addressBlock[i]
 					{
 						unique = false;
 						break;
 					}
 				if (unique)
-					blocksAccessedList.push_back(cursor->addressBlock[i]);
+					blocksAccessedList.push_back(1);
 				strKeys.append(to_string(keys[i]) + " ");
 			}
 			strKeys.append("(Average rating: " + to_string(rating / cursor->size) + ")");
@@ -329,19 +342,23 @@ void BPTree::rangequery(int lb, int hb)
 			}
 		}
 		string strKeys = "";
-		int* keys = cursor->getKeys();
+		intptr_t* keys = cursor->getKeys();
 		double rating = 0.0;
 		for (int i = 0; i < cursor->size; i++) {
-			rating += storage->getMovieInfoAt(cursor->addressBlock[i], cursor->addressOffset[i]).getRating();
+			MovieInfo* m;
+			mi.deserializeAt(m, keys[i]);
+			int c = m->getRating();
+		
+			rating += c;
 			bool unique = true;
 			for (int j = 0; j < blocksAccessedList.size(); j++)
-				if (blocksAccessedList[j] == cursor->addressBlock[i])
+				if (blocksAccessedList[j] == 1)
 				{
 					unique = false;
 					break;
 				}
 			if (unique)
-				blocksAccessedList.push_back(cursor->addressBlock[i]);
+				blocksAccessedList.push_back(1);
 			strKeys.append(to_string(keys[i]) + " ");
 		}
 		strKeys.append("(Average rating: " + to_string(rating / cursor->size) + ")");
@@ -373,34 +390,37 @@ void BPTree::rangequery(int lb, int hb)
 		std::cout << " Not found\n";
 	}
 }
-void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *child) // insert a new internal node in B+ tree
+void BPTree::insertInternal(intptr_t addressIn, Node *cursor, Node *child) // insert a new internal node in B+ tree
 {
-		if (cursor->size < MAX) // Mainly to update the Keys in parent's node
+	MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+	mi.deserializeAt(m, addressIn);
+	int x = m->getVotes();
+
+	if (cursor->size < MAX) // Mainly to update the Keys in parent's node
 	{
-		int i = 0;
-				while (x > cursor->key[i] && i < cursor->size)
+		int i = 0, c;
+		do{
+			MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+			mi.deserializeAt(m, cursor->key[i]);
+			c = m->getVotes();
+		
 			i++;
+		} while(x > c && i < cursor->size);
 		for (int j = cursor->size + 1; j > i; j--)
 		{
 			if (j > i && j <= cursor->size) {
 				cursor->key[j] = cursor->key[j - 1];
-				cursor->addressBlock[j] = cursor->addressBlock[j - 1];
-				cursor->addressOffset[j] = cursor->addressOffset[j - 1];
 			}
 			cursor->ptr[j] = cursor->ptr[j - 1];
 		}
-				cursor->key[i] = x;
-		cursor->addressBlock[i] = block;
-		cursor->addressOffset[i] = offset;
+		cursor->key[i] = addressIn;
 		cursor->size++;
 		cursor->ptr[i + 1] = child;
 	}
 	else
 	{
-				Node *newInternal = new Node;
-		int* virtualKey = new int[MAX + 1];  // temp key array. Will have N + 1 keys, need to split
-		int* virtualBlock = new int[MAX + 1];
-		int* virtualOffset = new int[MAX + 1];
+		Node *newInternal = new Node;
+		intptr_t* virtualKey = new intptr_t[MAX + 1];  // temp key array. Will have N + 1 keys, need to split
 		Node **virtualPtr = (Node**)malloc(sizeof(Node)*(MAX + 2));
 		for (int i = 0; i < MAX + 2; i++)
 			virtualPtr[i] = nullptr;
@@ -408,27 +428,26 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 		{
 			if (i < cursor->size) {
 				virtualKey[i] = cursor->key[i];
-				virtualBlock[i] = cursor->addressBlock[i];
-				virtualOffset[i] = cursor->addressOffset[i];
 			}
 			virtualPtr[i] = cursor->ptr[i];
 		}
-				int i = 0, j;
-		while (x > virtualKey[i] && i < MAX) //Retrieve the spot (index) of where we want to insert the key
+		int i = 0, j, c;
+		do{
+			MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+			mi.deserializeAt(m, virtualKey[i]);
+			c = m->getVotes();
+		
 			i++;
+		} while(x > c && i < MAX); //Retrieve the spot (index) of where we want to insert the key
 		for (int j = MAX + 1; j > i; j--) // (For Loop) is for Right sub tree? (Austin: No, this is for shifting keys and pointers to the right (of index i))
 		{
 			if (j > 0 && j <= MAX) {
 				virtualKey[j] = virtualKey[j - 1];
-				virtualBlock[j] = virtualBlock[j - 1];
-				virtualOffset[j] = virtualOffset[j - 1];
 			}
 			virtualPtr[j] = virtualPtr[j - 1];
 		}
 		
-		virtualKey[i] = x;
-		virtualBlock[i] = block;
-		virtualOffset[i] = offset;
+		virtualKey[i] = addressIn;
 		virtualPtr[i + 1] = child;
 		newInternal->IS_LEAF = false;
 		cursor->size = (MAX + 1) / 2;
@@ -438,21 +457,15 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 		{
 			if (i < newInternal->size) {
 				newInternal->key[i] = virtualKey[j];
-				newInternal->addressBlock[i] = virtualBlock[j ];
-				newInternal->addressOffset[i] = virtualOffset[j];
 			}
 			newInternal->ptr[i] = virtualPtr[j];
 		}
 		free(virtualKey);
-		free(virtualBlock);
-		free(virtualOffset);
 		free(virtualPtr);
 				if (cursor == root) // Need somewhere to Update the Height and Number of Nodes in B+ tree
 		{
 						Node *newRoot = new Node;
 			newRoot->key[0] = cursor->key[cursor->size];
-			newRoot->addressBlock[0] = cursor->addressBlock[cursor->size];
-			newRoot->addressOffset[0] = cursor->addressOffset[cursor->size];
 			//Austin: Point the internal node pointers to left and right sub tree accordingly
 			newRoot->ptr[0] = cursor;
 			newRoot->ptr[1] = newInternal;
@@ -463,7 +476,7 @@ void BPTree::insertInternal(int x, int block, int offset, Node *cursor, Node *ch
 		}
 		else // Update the parent Node's key
 		{
-						insertInternal(cursor->key[cursor->size], cursor->addressBlock[cursor->size], cursor->addressOffset[cursor->size], findParent(root, cursor), newInternal);
+						insertInternal(cursor->key[cursor->size], findParent(root, cursor), newInternal);
 		}
 	}
 }
@@ -490,6 +503,7 @@ Node *BPTree::findParent(Node *cursor, Node *child)
 	}
 	return parent;
 }
+
 void BPTree::remove(int x)
 {
 	if (root == nullptr)
@@ -807,7 +821,12 @@ void BPTree::display(Node *cursor, int level, vector<string>* txtOutput)
 {
 	for (int i = 0; i < cursor->size; i++)
 	{
-		(*txtOutput)[level] = (*txtOutput)[level].append(to_string(cursor->key[i]) + " ");
+		MovieInfo* m = (MovieInfo*)malloc(mi.getSerializedLength());
+		std::cout << std::hex << cursor->key[i] << endl;
+		mi.deserializeAt(m, cursor->key[i]);
+		int c = m->getVotes();
+	
+		(*txtOutput)[level] = (*txtOutput)[level].append(to_string(c) + " ");
 	}
 	(*txtOutput)[level] = (*txtOutput)[level].append("    ");
 

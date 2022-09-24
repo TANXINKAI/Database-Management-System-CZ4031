@@ -10,7 +10,7 @@ public:
 	MovieInfo(unsigned char _tconst[], double _rating, int _votes) {
 		for (int i = 0; i < 10; i++)
 			tconst[i] = _tconst[i];
-		rating = (unsigned int)(_rating * 10);
+		rating = (unsigned char)(_rating * 10);
 		votes = _votes;
 	}
 
@@ -39,9 +39,24 @@ public:
 	}
 
 	void deserialize(MovieInfo* mi, unsigned char* data) {
+		bool isNull = true;
+		for(int i = 0;i<getSerializedLength();i++){
+			if(data[i] != 0)
+				isNull = false;
+		}
+		if(isNull){
+			throw std::runtime_error("No data to deserialize");
+		}
 		memcpy(&mi->tconst, data, 10);
 		memcpy(&mi->rating, data + 10, 1);
 		memcpy(&mi->votes, data + 11, 4);
+	}
+
+	void deserializeAt(MovieInfo* out, intptr_t address) {
+		unsigned char* data = (unsigned char*)malloc(this->getSerializedLength());
+		memcpy(data, (unsigned char*)address, this->getSerializedLength());
+		this->deserialize(out, data);
+		free(data);
 	}
 
 private:

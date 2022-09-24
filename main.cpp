@@ -27,19 +27,22 @@ void parseData(int limit);
 
 int main()
 {
-	if(false){ //Set to true to run testTree() only
+		storage->verbose = true;
+	if(true){ //Set to true to run testTree() only
 		storage->verbose = true;
 		testTree();
-		sampleRetrieve();
+		//sampleRetrieve();
+		cin.get();
 		return 0;
 	}
-	parseData(0);
+	parseData(50);
 	buildIndex();
 	experiment1();
 	experiment2();
 	experiment3();
 	experiment4();
 	experiment5();
+	exit(0);
 }
 
 void buildIndex() {
@@ -50,10 +53,8 @@ void buildIndex() {
 	int dataCount = 0;
 	for (int i = 0; i < storage->blockManager.getBlockCount(); i++) {
 		for (int j = 0; j < tree.getTreeOrder() + 1; j++) {
-			MovieInfo mi;
 			try {
-				mi = storage->getMovieInfoAt(i, j);
-				tree.insert(mi.getVotes(), i, j);
+				tree.insert(storage->getAddressAt(i,j));
 				dataCount++;
 			}
 			catch (exception& message) {
@@ -63,7 +64,6 @@ void buildIndex() {
 			}
 			if (dataCount % 50000 == 0)
 				std::cout << to_string(dataCount) << " records indexed." << endl;
-
 		}
 	}
 	auto timeEnd = high_resolution_clock::now();
@@ -84,17 +84,7 @@ void experiment2() {
 		<< "\nTree Height: " << to_string(tree.getHeight()) << "\n\n";
 
 	string rootNodeContent = "Root Node Keys: ";
-	int* rootKeys = root->getKeys();
-	for (int i = 0; i < root->getSize(); i++) {
-		rootNodeContent = rootNodeContent.append(to_string(rootKeys[i]) + " ");
-	}
-	Node* firstChild = root->getPointers()[0];
-	string firstChildContent = "First Child Keys: ";
-	int* firstChildKeys = firstChild->getKeys();
-	for (int i = 0; i < firstChild->getSize(); i++) {
-		firstChildContent = firstChildContent.append(to_string(firstChildKeys[i]) + "(" + to_string(firstChild->getBlocks()[i]) + "," + to_string(firstChild->getOffsets()[i]) + ") ");
-	}
-	std::cout << rootNodeContent << endl << firstChildContent << "\n\n";
+	
 
 	//tree.display(root);
 }
@@ -116,35 +106,26 @@ void experiment5() {
 
 void testTree() {
 	BPTree node(3);
-	node.insert(5, 0, 0);
-	node.insert(15, 0, 1);
-	node.insert(25, 0, 2);
-	node.insert(35, 0, 3);
-	node.insert(45, 0, 4);
-	node.insert(55, 0, 0);
-	node.insert(65, 0, 1);
-	node.insert(75, 0, 2);
-	node.insert(85, 0, 3);
-	node.insert(95, 0, 4);
-	node.insert(105, 0, 0);
-	node.insert(115, 0, 1);
-	node.insert(125, 0, 2);
-	node.insert(135, 0, 3);
-	node.insert(145, 0, 4);
-	node.insert(155, 0, 0);
-	node.insert(165, 0, 1);
-	node.insert(175, 0, 2);
-	node.insert(185, 0, 3);
-	node.insert(195, 0, 4);
-	node.insert(205, 0, 3);
-
-	node.insert(28, 0, 4);
-	node.insert(20, 0, 3);
-	node.insert(18, 0, 3);
-	node.display(node.getRoot());
-	std::cout << endl << endl;
-	node.insert(40, 0, 3);
-	
+	for(int i=0;i<25;i++){
+		unsigned char tconst[10] = {'a','b','c','d','e','f','g','h','i',to_string(i)[0]};
+		MovieInfo mi(tconst, i, 5+(i*10));
+		std::cout << "Inserting for " << to_string((i * 10)+ 5) << endl;
+		storage->insertMovieInfo(mi);
+	}
+	for (int i = 0; i < storage->blockManager.getBlockCount(); i++) {
+		for (int j = 0; j < storage->blockManager.getMovieInfoPerBlock(); j++) {
+			try {
+				std::cout << "Indexing address " << std::hex << storage->getAddressAt(i,j) << endl;
+				node.insert(storage->getAddressAt(i,j));
+				node.display(node.getRoot());
+			}
+			catch (exception& message) {
+				//Can safely ignore, only exception thrown is when record is not found lol when trying to access empty block + offset
+				if (storage->verbose)
+					std::cout << message.what() << endl;
+			}
+		}
+	}
 
 	node.display(node.getRoot());
 	std::cout << endl << endl;

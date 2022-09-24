@@ -40,7 +40,7 @@ public:
 		}
 		this->blocks[this->blockCount - 1] = (intptr_t)block;
 
-		if (this->verbose) {
+		if (true) {
 			std::cout << "Created new block at " << std::hex << (intptr_t)block << ".\nTotal block count: " << std::to_string(blockCount) << "\nBlock index address: " << std::hex << this->blocks << "\n";
 		}
 
@@ -71,15 +71,16 @@ public:
 
 				if (this->freeRecordOffset == floor((this->blockSize - HEADER_LENGTH) / sizePerRecord))
 					this->blockData[0] = 1;
-				return &this->blockData[HEADER_LENGTH + (sizePerRecord * this->freeRecordOffset)];
+				return &this->blockData[HEADER_LENGTH + (sizePerRecord * (this->freeRecordOffset))];
 			}
 		}
 		return nullptr;
 	}
 
-	unsigned char* getAddressOfRecordAt(int offset) {
+	intptr_t getAddressOfRecordAt(int offset) {
 		MovieInfo mi;
-		unsigned char* ptr = &this->blockData[offset * mi.getSerializedLength() + HEADER_LENGTH];
+		int sizePerRecord = mi.getSerializedLength();
+		intptr_t ptr = (intptr_t)&this->blockData[(offset * sizePerRecord) + HEADER_LENGTH];
 		return ptr;
 	}
 

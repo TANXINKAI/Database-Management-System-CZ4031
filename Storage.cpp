@@ -79,6 +79,16 @@ MovieInfo Storage::getMovieInfoAt(int block, int offset) {
 	return this->blockManager.getMovieInfoAt(offset);
 }
 
+intptr_t Storage::getAddressAt(int block, int offset) {
+	if (block >= this->blockManager.getBlockCount() || block < 0)
+		throw std::runtime_error("Block does not exist");
+
+	unsigned char* targetBlock = (unsigned char*)this->blockManager.getBlock(block);
+	this->blockManager.parse(&this->blockManager, targetBlock, this->blockSize);
+
+	return this->blockManager.getAddressOfRecordAt(offset);
+}
+
 unsigned char* Storage::insertMovieInfo(MovieInfo mi) {
 	unsigned char* availableSpace = nullptr;
 	int blockCount = this->blockManager.getBlockCount();

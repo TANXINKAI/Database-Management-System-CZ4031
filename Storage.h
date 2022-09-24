@@ -27,6 +27,7 @@ public:
 
 	unsigned char * insertMovieInfo(MovieInfo mi);
 	MovieInfo getMovieInfoAt(int block, int offset);
+	intptr_t getAddressAt(int block, int offset);
 
 private:
 	size_t blockSize;
