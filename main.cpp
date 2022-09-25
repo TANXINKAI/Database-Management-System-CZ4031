@@ -22,6 +22,7 @@ void experiment3();
 void experiment4();
 void experiment5();
 void testTree();
+void testTree2();
 void sampleRetrieve();
 void parseData(int limit);
 
@@ -30,9 +31,13 @@ int main()
 	if(false){ //Set to true to run testTree() only
 		storage->verbose = true;
 		testTree();
+		// testTree2();
 		sampleRetrieve();
 		return 0;
 	}
+
+
+
 	parseData(0);
 	buildIndex();
 	experiment1();
@@ -107,8 +112,9 @@ void experiment3() {
 
 void experiment4() {
 	std::cout << endl << "(Experiment 4)" << endl;
-	// tree.rangequery(30000, 40000);
-	tree.rangequery(500, 501);
+	tree.rangequery(30000, 40000);
+	tree.leafNodedisplaylimited(tree.getRoot(),3);
+	// tree.rangequery(6, 7);
 }
 
 void experiment5() {
@@ -145,18 +151,78 @@ void testTree() {
 	node.insert(18, 0, 3);
 	node.display(node.getRoot());
 	std::cout << endl << endl;
-	node.insert(40, 0, 3);
+	// node.insert(40, 0, 3);
+	
+	node.leafNodedisplay(node.getRoot());
+	// node.leafNodedisplaylimited(node.getRoot(), 3);
+	// std::cout << endl << endl;
+
+	
+	// node.display(node.getRoot());
+	// std::cout << endl << endl;
+	// int counts;
+	// counts = node.count_nodes(node.getRoot());
+	// std::cout << "Number of Nodes: " << counts << "\n";
 	
 
+	// node.search(15);
+	// node.remove(15);
+	
+}
+
+void testTree2() {
+	BplusTree node(3);
+	node.insert(1, 0, 0);
+	node.insert(4, 0, 1);
+	node.insert(7, 0, 2);
+	node.insert(10, 0, 4);
+	node.insert(17, 0, 3);
+	node.insert(19, 0, 4);
+
+	node.insert(25, 0, 2);
+	node.insert(28, 0, 3);
+	node.insert(31, 0, 4);
+
+
+	std::cout << "display before insertion" << endl;
 	node.display(node.getRoot());
 	std::cout << endl << endl;
-	int counts;
-	counts = node.count_nodes(node.getRoot());
-	std::cout << "Number of Nodes: " << counts << "\n";
 
-	node.search(15);
-	node.remove(15);
+	
+	node.insert(20, 0, 0);
+	
 
+	std::cout << "display after insertion 20" << endl;
+	node.display(node.getRoot());
+	std::cout << node.getRoot();
+	std::cout << endl << endl;
+	// node.leafNodedisplay(node.getRoot());
+
+
+	node.insert(21, 0, 1);
+	std::cout << "display after insertion 21" << endl;
+	node.display(node.getRoot());
+	std::cout << node.getRoot();
+	std::cout << endl << endl;
+	node.leafNodedisplay(node.getRoot());
+
+	// node.insert(40, 0, 3);
+	
+	// node.leafNodedisplay(node.getRoot());
+	// node.leafNodedisplaylimited(node.getRoot(), 3);
+	// std::cout << endl << endl;
+
+	
+	// node.display(node.getRoot());
+	// std::cout << endl << endl;
+	// int counts;
+	// counts = node.count_nodes(node.getRoot());
+	// std::cout << "Number of Nodes: " << counts << "\n";
+	
+
+	// node.search(15);
+	// node.remove(15);
+	
 }
 
 void sampleRetrieve() {

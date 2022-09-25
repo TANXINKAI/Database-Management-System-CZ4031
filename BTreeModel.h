@@ -74,6 +74,8 @@ public:
 	int count_nodes(Node *);
 	void display(Node *);
 	void leveldisplay(Node *, int, vector<string> *);
+	void leafNodedisplay(Node *);
+	void leafNodedisplaylimited(Node *, int);
 
 	Storage *storage = nullptr;
 };
@@ -191,12 +193,25 @@ void BplusTree::insert(int x, int block, int offset)
 			tempNodeBlock[i] = block;
 			tempNodeOffset[i] = offset;
 			newLeaf->IS_LEAFNODE = true;
-			newLeaf->size = MAX_KEYS + 1 - (MAX_KEYS + 1) / 2;
+			// floor taken
+			newLeaf->size = MAX_KEYS + 1 - ((MAX_KEYS + 1) / 2);
+
+			// newLeaf->size = curr->size + 1 - (MAX_KEYS + 1) / 2;
 
 			// Point the new leaf's last pointer to the right siblings last pointer
-			if (curr->ptr[curr->size] != nullptr && curr->ptr[curr->size]->ptr[curr->ptr[MAX_KEYS]->size] != nullptr)
-				newLeaf->ptr[newLeaf->size] = curr->ptr[curr->size]->ptr[curr->ptr[MAX_KEYS]->size];
+			if (curr->ptr[curr->size] != nullptr)
+				{
+					newLeaf->ptr[newLeaf->size] = curr->ptr[curr->size];
+					
+					// Node **nextptr = (Node **)malloc(sizeof(Node) * (MAX_KEYS + 2));
+					// nextptr[0] = curr->ptr[curr->size];
+					// newLeaf->ptr[newLeaf->size] = nextptr[nextptr[0]->size];
 
+					// free(nextptr);
+				}
+			
+				
+ 
 			curr->size = (MAX_KEYS + 1) / 2;
 			curr->ptr[curr->size] = newLeaf;
 
@@ -297,31 +312,31 @@ void BplusTree::search(int x)
 			std::cout << "Node " << to_string(i + 1) << " keys: " << contents[i] << endl;
 		}
 
-		// int *curr_keys = curr->getKeys();
-		// for(int c = 0; c < curr->size; c++){
-		// 	std::cout << "curr_key[c] = " << to_string(curr_keys[c]) << "\n";
-		// }
-
 		while (curr->key[0] <= x)
 		{
 			for (int i = 0; i < curr->size; i++)
 			{
-				std::cout << "key is : " << curr->key[i] << "\n";
+				std::cout << "key is : " << curr->key[i] << "\t curr->size: " << curr->getSize() << endl;
 				if (curr->key[i] == x)
 				{
 					std::cout << "Found key " << to_string(x) << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << "\n";
-					std::cout << "i: " << i << "\t curr->size: " << curr->getSize() << endl;
+					std::cout << "i: " << i << endl;
 					if (!keyFound)
 					{
 						keyFound = true;
 					}
-					// return;
 				}
 			}
+			//end of leaf nodes.
+			if (!curr->ptr[curr->size])
+			{
+				std::cout << "terminated by null" << endl;
+				free(curr);
+				return;
+			}
 			curr = curr->ptr[curr->size];
+			std::cout << "new curr->key[curr->size]: " << curr->key[curr->size] << endl;
 		}
-
-		std::cout << "end of while loop" << endl;
 		
 		if (!keyFound)
 				std::cout << "Could not find key " << to_string(x) << endl;
@@ -405,52 +420,62 @@ void BplusTree::rangequery(int lb, int hb)
 			std::cout << "Node " << to_string(i + 1) << " keys: " << contents[i] << endl;
 		}
 
-		// for (int i = 0; i < curr->size; i++)
-		// {
-		// 	if (curr->key[i] == lb)
-		// 	{
-		// 		for (int j = i; j < curr->size; j++)
-		// 		{
-		// 			if (curr->key[j] > hb)
-		// 			{
-		// 				return;
-		// 			}
-		// 			{
-		// 				std::cout << curr->key[j] << " Found\n";
-		// 			}
-		// 		}
-		// 		return;
-		// 	}
-		// }
 
+		// loop for values in range.
 		bool keyFound = false;
+		
+		if (curr == nullptr)
+			return;
+		
+		// take leftmost pointer to obtain leafnode.
+		while (curr->IS_LEAFNODE == false)
+		{
+			int *keys = curr->getKeys();
+			std::cout << keys[0] << endl;
+			curr = curr->ptr[0];
+		}
+		// std::cout << "leafNode display" << endl;
+
+
+		if (curr->key)
+		{
+			std::cout << curr->key[0] << "is null" << endl;
+		}
+
 		while (curr->key[0] <= hb)
 		{
+			std::cout << curr->size << endl;
 			for (int i = 0; i < curr->size; i++)
 			{
-				std::cout << "key is : " << curr->key[i] << "\n";
-				if (curr->key[i] >= lb)
+				if (curr->key[i] < lb || curr->key[i] > hb)
 				{
-					std::cout << "Found key " << curr->key[i] << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << "\n";
-					std::cout << "i: " << i << "\t curr->size: " << curr->getSize() << endl;
-					// std::cout << curr->key[i] << " Found\n";
+					// std::cout << "lb / hb skipped" << endl;
+					continue;
+				}
+				else
+				{
 					if (!keyFound)
 					{
 						keyFound = true;
 					}
-				}
-				else{
-					continue;
+					std::cout << "Found key " << curr->key[i] << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << "\n";
 				}
 			}
+			if (!curr->ptr[curr->size])
+			{
+				std::cout << "terminated by null" << endl;
+				free(curr);
+				return;
+			}
 			curr = curr->ptr[curr->size];
-			std::cout << "new curr->key[0]: " << curr->key[0] << endl;
-			std::cout << "new curr->key[curr->size - 1]: " << curr->key[curr->size - 1] << endl;
+			std::cout << endl;
 		}
 
-		std::cout << "end of while loop" << endl;
+		// std::cout << "new curr->key[0]: " << curr->key[0] << endl;
+		// std::cout << "new curr->key[curr->size - 1]: " << curr->key[curr->size - 1] << endl;
 
-		if(!keyFound) std::cout << " Not found\n";
+		if (!keyFound)
+			std::cout << " Not found\n";
 	}
 }
 void BplusTree::insertInternal(int x, int block, int offset, Node *curr, Node *child) // insert a new internal node in B+ tree
@@ -941,4 +966,87 @@ void BplusTree::leveldisplay(Node *curr, int level, vector<string> *txtOutput)
 			(*txtOutput)[level] = (*txtOutput)[level].append("    ");
 		}
 	}
+}
+
+void BplusTree::leafNodedisplay(Node *root){
+	Node *temp = root;
+	if(temp == nullptr) return;
+	std::cout<<"leafNode display"<<endl;
+
+	while (temp->IS_LEAFNODE == false){
+		int *keys = temp->getKeys();
+		std::cout<< keys[0] <<endl;
+		temp = temp->ptr[0];
+	}
+
+	std::cout<<"is leaf node" << temp->IS_LEAFNODE <<endl;
+
+	if(temp->key){
+		std::cout<<temp->key[0]<<"is null"<<endl;
+	}
+
+	while (temp->key[0])
+	{
+		std::cout<<temp->size<<endl;
+		for (int i = 0; i < temp->size; i++)
+		{
+			if (temp->key[i])
+			{
+				cout << temp->key[i] << "\t";
+			}
+			else{
+				return;
+			}
+		}
+		if(!temp->ptr[temp->size]) {
+			std::cout<<"terminated by null"<<endl;
+			free(temp);
+			return;
+			}
+		temp = temp->ptr[temp->size];
+		std::cout<<endl;
+	}
+
+}
+
+void BplusTree::leafNodedisplaylimited(Node *root, int range){
+	Node *temp = root;
+	if(temp == nullptr) return;
+	std::cout<<"leafNode display limited"<<endl;
+
+	while (temp->IS_LEAFNODE == false){
+		int *keys = temp->getKeys();
+		std::cout<< keys[0] <<endl;
+		temp = temp->ptr[0];
+	}
+
+	std::cout<<"is leaf node" << temp->IS_LEAFNODE <<endl;
+
+	if(temp->key){
+		std::cout<<temp->key[0]<<"is null"<<endl;
+	}
+
+	while (temp->key[0] && range >= 0)
+	{
+		std::cout<<temp->size<<endl;
+		for (int i = 0; i < temp->size; i++)
+		{
+			if (temp->key[i])
+			{
+				cout << temp->key[i] << "\t";
+			}
+			else{
+				return;
+			}
+		}
+		if(!temp->ptr[temp->size]) {
+			std::cout<<"terminated by null"<<endl;
+			free(temp);
+			return;
+			}
+		temp = temp->ptr[temp->size];
+		std::cout<<endl;
+		range--;
+	}
+
 }
