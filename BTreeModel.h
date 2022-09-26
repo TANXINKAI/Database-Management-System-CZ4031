@@ -202,16 +202,16 @@ void BplusTree::insert(int x, int block, int offset)
 			if (curr->ptr[curr->size] != nullptr)
 				{
 					newLeaf->ptr[newLeaf->size] = curr->ptr[curr->size];
-					
+
 					// Node **nextptr = (Node **)malloc(sizeof(Node) * (MAX_KEYS + 2));
 					// nextptr[0] = curr->ptr[curr->size];
 					// newLeaf->ptr[newLeaf->size] = nextptr[nextptr[0]->size];
 
 					// free(nextptr);
 				}
-			
-				
- 
+
+
+
 			curr->size = (MAX_KEYS + 1) / 2;
 			curr->ptr[curr->size] = newLeaf;
 
@@ -337,7 +337,7 @@ void BplusTree::search(int x)
 			curr = curr->ptr[curr->size];
 			std::cout << "new curr->key[curr->size]: " << curr->key[curr->size] << endl;
 		}
-		
+
 		if (!keyFound)
 				std::cout << "Could not find key " << to_string(x) << endl;
 		return;
@@ -423,10 +423,10 @@ void BplusTree::rangequery(int lb, int hb)
 
 		// loop for values in range.
 		bool keyFound = false;
-		
+
 		if (curr == nullptr)
 			return;
-		
+
 		// take leftmost pointer to obtain leafnode.
 		while (curr->IS_LEAFNODE == false)
 		{
@@ -668,10 +668,12 @@ void BplusTree::remove(int x)
 			}
 			return;
 		}
+		// assigning the last ptr to the next node's ptr
 		curr->ptr[curr->size] = curr->ptr[curr->size + 1];
 		curr->ptr[curr->size + 1] = nullptr;
 		if (curr->size >= (MAX_KEYS + 1) / 2)
 		{
+		    // meets minimum size criteria
 			return;
 		}
 		if (leftSibling >= 0)
@@ -679,17 +681,23 @@ void BplusTree::remove(int x)
 			Node *leftNode = parent->ptr[leftSibling];
 			if (leftNode->size >= (MAX_KEYS + 1) / 2 + 1)
 			{
+			    // borrow (largest) from left sibling if it can spare
 				for (int i = curr->size; i > 0; i--)
 				{
 					curr->key[i] = curr->key[i - 1];
 				}
 				curr->size++;
+				// assigning the last ptr to the next node's ptr
 				curr->ptr[curr->size] = curr->ptr[curr->size - 1];
 				curr->ptr[curr->size - 1] = nullptr;
+				// borrow largest from left
 				curr->key[0] = leftNode->key[leftNode->size - 1];
 				leftNode->size--;
+				// assigning left sibling last ptr to current node's ptr
 				leftNode->ptr[leftNode->size] = curr;
 				leftNode->ptr[leftNode->size + 1] = nullptr;
+				// don't need to update the keys of left sibling because size--, any traversal will not reach it. Insertion will overwrite
+				// on the parent node, edit the smallest number of current node
 				parent->key[leftSibling] = curr->key[0];
 				return;
 			}
@@ -699,10 +707,27 @@ void BplusTree::remove(int x)
 			Node *rightNode = parent->ptr[rightSibling];
 			if (rightNode->size >= (MAX_KEYS + 1) / 2 + 1)
 			{
+			    // borrow smallest from right sibling
+				curr->size++;
+				// curr-> size is the new size
+				curr->key[curr->size - 1] = rightNode->key[0];
+				// decrease size of rightNode
+				rightNode->size--;
+				// updating the rightNode's ptr after "borrowing"
+				rightNode->ptr[0] = rightNode->ptr[1];
+				for (int i = 0; i < rightNode->size; i++)
+				{
+					rightNode->key[i] = rightNode->key[i + 1];
+				}
+				// Assigning the last ptr to the rightNode ptr. 2nd last ptr don't need to reupdate as it is already pointed to the key of previous smallest rightNode key
+				curr->ptr[curr->size] = rightNode;
+
+				/* Original Code
 				curr->size++;
 				curr->ptr[curr->size] = curr->ptr[curr->size - 1];
 				curr->ptr[curr->size - 1] = nullptr;
 				curr->key[curr->size - 1] = rightNode->key[0];
+
 				rightNode->size--;
 				rightNode->ptr[rightNode->size] = rightNode->ptr[rightNode->size + 1];
 				rightNode->ptr[rightNode->size + 1] = nullptr;
@@ -710,6 +735,7 @@ void BplusTree::remove(int x)
 				{
 					rightNode->key[i] = rightNode->key[i + 1];
 				}
+				*/
 				parent->key[rightSibling - 1] = rightNode->key[0];
 				return;
 			}
@@ -719,11 +745,15 @@ void BplusTree::remove(int x)
 			Node *leftNode = parent->ptr[leftSibling];
 			for (int i = leftNode->size, j = 0; j < curr->size; i++, j++)
 			{
+			    // adding current node content into left node content
 				leftNode->key[i] = curr->key[j];
 			}
-			leftNode->ptr[leftNode->size] = nullptr;
+
+			leftNode->ptr[leftNode->size] = nullptr;   // Why nullptr?
 			leftNode->size += curr->size;
+			// updating the merged node's ptr to the deleted node's last ptr
 			leftNode->ptr[leftNode->size] = curr->ptr[curr->size];
+			// removing current node
 			removeInternal(parent->key[leftSibling], parent, curr);
 			delete[] curr->key;
 			delete[] curr->ptr;
@@ -734,12 +764,14 @@ void BplusTree::remove(int x)
 			Node *rightNode = parent->ptr[rightSibling];
 			for (int i = curr->size, j = 0; j < rightNode->size; i++, j++)
 			{
+			    // adding right node content into current node content
 				curr->key[i] = rightNode->key[j];
 			}
 			curr->ptr[curr->size] = nullptr;
 			curr->size += rightNode->size;
 			curr->ptr[curr->size] = rightNode->ptr[rightNode->size];
 			std::cout << "Merging two leaf nodes\n";
+			// delete the right node
 			removeInternal(parent->key[rightSibling - 1], parent, rightNode);
 			delete[] rightNode->key;
 			delete[] rightNode->ptr;
@@ -782,6 +814,7 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 	int pos;
 	for (pos = 0; pos < curr->size; pos++)
 	{
+	    // finding "pos" of key deleted
 		if (curr->key[pos] == x)
 		{
 			break;
@@ -789,10 +822,12 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 	}
 	for (int i = pos; i < curr->size; i++)
 	{
+	    // updating key of the "parent" node
 		curr->key[i] = curr->key[i + 1];
 	}
 	for (pos = 0; pos < curr->size + 1; pos++)
 	{
+	    // finding the "pos" of the pointer that is pointed to the deleted child
 		if (curr->ptr[pos] == child)
 		{
 			break;
@@ -800,11 +835,13 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 	}
 	for (int i = pos; i < curr->size + 1; i++)
 	{
+	    // updating the ptrs of the "parent" node
 		curr->ptr[i] = curr->ptr[i + 1];
 	}
 	curr->size--;
 	if (curr->size >= (MAX_KEYS + 1) / 2 - 1)
 	{
+	    // meets minimum key requirements
 		return;
 	}
 	if (curr == root)
@@ -820,6 +857,7 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 			break;
 		}
 	}
+    // should here onwards be the same as "remove" , maybe call "remove" function?
 	if (leftSibling >= 0)
 	{
 		Node *leftNode = parent->ptr[leftSibling];
