@@ -931,7 +931,7 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 			rightNode->ptr[j] = nullptr;
 		}
 		curr->size += rightNode->size + 1;
-		rightNode->size = 0;
+		rightNode->size = 0;git
 		removeInternal(parent->key[rightSibling - 1], parent, rightNode);
 	}
 }
