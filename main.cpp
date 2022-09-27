@@ -14,7 +14,7 @@ using namespace std::chrono;
 //Initialize storage instance on the heap
 //Bitshift 1 with scale of data storage
 Storage* storage = new Storage(200, 100 * (1 << ENUM_STORAGE_SCALE_MEGABYTE));
-BPTree tree = NULL;
+BplusTree tree = NULL;
 void buildIndex();
 void experiment1();
 void experiment2();
@@ -27,10 +27,13 @@ void parseData(int limit);
 
 int main()
 {
-	if(false){ //Set to true to run testTree() only
+	try{
+	if(true){ //Set to true to run testTree() only
 		storage->verbose = true;
 		testTree();
 		sampleRetrieve();
+		std::cout << "Press ENTER Key To Exit" << endl;
+		cin.get();
 		return 0;
 	}
 	parseData(0);
@@ -40,12 +43,19 @@ int main()
 	experiment3();
 	experiment4();
 	experiment5();
+	}
+	catch(exception &message){
+					std::cout << message.what() << endl;
+	}
+
+	std::cout << endl << endl << "Press ENTER Key To Exit" << endl;
+	cin.get();
 }
 
 void buildIndex() {
 	std::cout << "Building index (B+ Tree)" << endl;
 	auto timeStart = high_resolution_clock::now();
-	tree = BPTree(storage->blockManager.getMovieInfoPerBlock());
+	tree = BplusTree(storage->blockManager.getMovieInfoPerBlock());
 	tree.storage = storage;
 	int dataCount = 0;
 	for (int i = 0; i < storage->blockManager.getBlockCount(); i++) {
@@ -68,7 +78,6 @@ void buildIndex() {
 	}
 	auto timeEnd = high_resolution_clock::now();
 	std::cout << "B+ tree build completed in " << to_string(duration_cast<milliseconds>(timeEnd - timeStart).count()) << " milliseconds" << endl << endl;
-
 }
 
 void experiment1() {
@@ -81,8 +90,9 @@ void experiment2() {
 	Node* root = tree.getRoot();
 	std::cout << endl << "(Experiment 2)" << endl << "Tree Parameter n: " << to_string(tree.getTreeOrder())
 		<< "\nNumber of Nodes in Tree: " << to_string(tree.count_nodes(root))
+		<< "\nMem in Tree (testing): " << to_string(tree.count_memory(root)) << " MB"
 		<< "\nTree Height: " << to_string(tree.getHeight()) << "\n\n";
-
+		
 	string rootNodeContent = "Root Node Keys: ";
 	int* rootKeys = root->getKeys();
 	for (int i = 0; i < root->getSize(); i++) {
@@ -101,12 +111,13 @@ void experiment2() {
 
 void experiment3() {
 	std::cout << endl << "(Experiment 3)" << endl;
-	tree.search(33858);
+	tree.search(500);
 }
 
 void experiment4() {
 	std::cout << endl << "(Experiment 4)" << endl;
-	tree.rangequery(30000, 40000);
+	// tree.rangequery(30000, 40000);
+	tree.rangequery(500, 501);
 }
 
 void experiment5() {
@@ -115,42 +126,47 @@ void experiment5() {
 }
 
 void testTree() {
-	BPTree node(3);
-	node.insert(5, 0, 0);
-	node.insert(15, 0, 1);
-	node.insert(25, 0, 2);
-	node.insert(35, 0, 3);
-	node.insert(45, 0, 4);
-	node.insert(55, 0, 0);
-	node.insert(65, 0, 1);
-	node.insert(75, 0, 2);
-	node.insert(85, 0, 3);
-	node.insert(95, 0, 4);
-	node.insert(105, 0, 0);
-	node.insert(115, 0, 1);
-	node.insert(125, 0, 2);
-	node.insert(135, 0, 3);
-	node.insert(145, 0, 4);
-	node.insert(155, 0, 0);
-	node.insert(165, 0, 1);
-	node.insert(175, 0, 2);
-	node.insert(185, 0, 3);
-	node.insert(195, 0, 4);
-	node.insert(205, 0, 3);
-
-	node.insert(28, 0, 4);
-	node.insert(20, 0, 3);
-	node.insert(18, 0, 3);
-	node.display(node.getRoot());
-	std::cout << endl << endl;
-	node.insert(40, 0, 3);
+	BplusTree node(3);
+	node.storage = storage;
 	
+	unsigned char tconst[10] = {'a','b','c','d','e','f','g','h','i','j'};
+	for(int c=0;c<21;c++){
+		MovieInfo mi(tconst,0.0,c*10+5);
+		storage->insertMovieInfo(mi);
+	}
+	MovieInfo mi1(tconst,0.0,28);
+	storage->insertMovieInfo(mi1);
 
+	MovieInfo mi2(tconst,0.0,20);
+	storage->insertMovieInfo(mi2);
+
+	MovieInfo mi3(tconst,0.0,18);
+	storage->insertMovieInfo(mi3);
+
+	MovieInfo mi4(tconst,0.0,40);
+	storage->insertMovieInfo(mi4);
+
+	for (int i = 0; i < storage->blockManager.getBlockCount(); i++) {
+		for (int j = 0; j < storage->blockManager.getMovieInfoPerBlock(); j++) {
+			MovieInfo mi;
+			try {
+				mi = storage->getMovieInfoAt(i, j);
+				node.insert(mi.getVotes(), i, j);
+			}
+			catch (exception& message) {
+				//Can safely ignore, only exception thrown is when record is not found lol when trying to access empty block + offset
+				if (storage->verbose)
+					std::cout << message.what() << endl;
+			}
+		}
+	}
+
+	std::cout << endl << endl;
 	node.display(node.getRoot());
 	std::cout << endl << endl;
 	int counts;
 	counts = node.count_nodes(node.getRoot());
-	std::cout << "Number of Nodes: " << counts << "\n";
+	std::cout << "Number of Nodes: " << to_string(counts) << "\n";
 
 	node.search(15);
 	node.remove(15);
@@ -171,7 +187,8 @@ void parseData(int limit) {
 	auto timeStart = high_resolution_clock::now();
 	int dataCount = 0;
 	fstream file;
-	file.open("C:\\Users\\woodmon122\\Desktop\\NTU\\Y3S1\\CZ4031\\trunk\\data.tsv", ios::in);
+	file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
+	
 	//file.open("C:\\Users\\austi\\source\\repos\\cz4031\\cz4031\\data.tsv", ios::in);
 	if (file.is_open()) {
 		string line;
