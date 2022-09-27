@@ -71,7 +71,7 @@ public:
 
 				if (this->freeRecordOffset == floor((this->blockSize - HEADER_LENGTH) / sizePerRecord))
 					this->blockData[0] = 1;
-				return &this->blockData[HEADER_LENGTH + (sizePerRecord * this->freeRecordOffset)];
+				return &this->blockData[HEADER_LENGTH + (sizePerRecord * this->freeRecordOffset - 1)];
 			}
 		}
 		return nullptr;
@@ -123,7 +123,7 @@ public:
 	}
 
 	int getBlockCount() {
-		return this->blockCount;
+			return this->blockCount;
 	}
 
 	intptr_t getBlock(int block) {
