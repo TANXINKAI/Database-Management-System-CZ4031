@@ -91,11 +91,10 @@ unsigned char* Storage::insertMovieInfo(MovieInfo mi) {
 			availableSpace = nullptr;
 	}
 	//No available space available (No existing blocks with allowance for new record)
-	if (availableSpace == nullptr)
+	if (availableSpace == nullptr){
 		availableSpace = (unsigned char*)this->createBlock();
-
-
-	this->blockManager.parse(&this->blockManager, availableSpace, this->blockSize);
+		this->blockManager.parse(&this->blockManager, availableSpace, this->blockSize);
+	}
 
 	unsigned char* addressWritten = this->blockManager.insertMovieInfoAt(mi);
 
