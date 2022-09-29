@@ -29,7 +29,7 @@ void parseData(int limit);
 
 int main()
 {
-	try{
+	// try{
 	if(true){ //Set to true to run testTree() only
 		storage->verbose = true;
 		testTree3();
@@ -175,7 +175,6 @@ void testTree() {
 	node.search(15);
 	node.remove(15);
 
-<<<<<<< HEAD
 	// node.search(15);
 	// node.remove(15);
 	
@@ -222,7 +221,7 @@ void testTree2() {
 void testTree3() {
 	BplusTree node(3);
 	
-	int t_case = 4; 
+	int t_case = 5; 
 	
 	switch(t_case){
 		case 1: 
@@ -341,39 +340,96 @@ void testTree3() {
 			
 			
 			// Bug in deletion of 1, merge and deletion of root node.
-			std::cout << "display after deletion 1 " << endl;
-			node.remove(1);
+			std::cout << "display after deletion 1" << endl;
+			node.remove(10);
 			node.display(node.getRoot());
 			std::cout << endl << endl;
-			// node.leafNodedisplay(node.getRoot());
+			
 			
 			
 			std::cout << "display after deletion 25" << endl;
 			node.remove(25);
 			node.display(node.getRoot());
 			std::cout << endl << endl;
+			// node.leafNodedisplay(node.getRoot());
 
 
-
-			std::cout << "display after deletion 28 & 31" << endl;
+			// std::cout << "display after deletion 28 & 31" << endl;
 			node.remove(28);
 			node.remove(31);
 			node.display(node.getRoot());
 			std::cout << "display after deletion 4 & 19" << endl;
 			node.remove(4);
+			node.display(node.getRoot());
+			std::cout << endl << endl;
 			node.remove(19);
 			node.display(node.getRoot());
 			std::cout << endl << endl;
-			std::cout << "display after deletion 10" << endl;
-			node.remove(10);
+			// std::cout << "display after deletion 10" << endl;
+			// node.remove(10);
+			// node.display(node.getRoot());
+			// std::cout << endl << endl;
+			
+			case 5:
+			node.insert(1, 0, 0);
+			node.insert(2, 0, 3);
+			node.insert(3, 0, 4);
+			node.insert(4, 0, 1);
+			node.insert(5, 0, 2);
+			node.insert(6, 0, 2);
+			node.insert(7, 0, 2);
+			node.insert(8, 0, 4);
+			node.insert(9, 0, 2);
+			node.insert(10, 0, 4);
+			node.insert(11, 0, 4);
+			node.insert(12, 0, 4);
+			node.insert(13, 0, 3);
+			node.insert(14, 0, 3);
+			node.insert(15, 0, 3);
+			node.insert(16, 0, 3);
+			node.insert(17, 0, 3);
+			node.insert(18, 0, 3);
+			node.insert(19, 0, 4);
+			node.insert(20, 0, 0);
+			node.insert(21, 0, 1);
+			node.insert(23, 0, 3);
+			node.insert(24, 0, 2);
+			node.insert(25, 0, 2);
+			node.insert(26, 0, 3);
+			node.insert(27, 0, 3);
+			node.insert(28, 0, 3);
+			node.insert(29, 0, 3);
+			node.insert(30, 0, 3);
+			node.insert(31, 0, 4);
+			node.insert(32, 0, 3);
+			node.insert(33, 0, 3);
+			node.insert(34, 0, 1);
+
 			node.display(node.getRoot());
 			std::cout << endl << endl;
-			
+
+			node.remove(5);
+			node.display(node.getRoot());
+			std::cout << endl << endl;
+
+			node.remove(7);
+			node.display(node.getRoot());
+			std::cout << endl << endl;
+
+			node.remove(27);
+			node.display(node.getRoot());
+			std::cout << endl << endl;
+
+			// node.remove(19);
+			// node.display(node.getRoot());
+			// std::cout << endl << endl;
+
+			// node.remove(11);
+			// node.display(node.getRoot());
+			// std::cout << endl << endl;
 			break;
 	}
 	
-=======
->>>>>>> 74d3173cb827a7410e146ddcbe8770fe22206d5f
 }
 
 void sampleRetrieve() {
