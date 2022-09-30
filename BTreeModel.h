@@ -47,6 +47,16 @@ public:
 	{
 		return this->ptr;
 	}
+	int getMemSize(){
+		int retVal = 0;
+		retVal += sizeof(IS_LEAFNODE);
+		retVal += sizeof(key) * MAX_KEYS;
+		retVal += sizeof(size);
+		retVal += sizeof(ptr) * (MAX_KEYS + 1);
+		retVal += sizeof(addressBlock) * MAX_KEYS;
+		retVal += sizeof(addressOffset) * MAX_KEYS;
+		return retVal;
+	}
 };
 class BplusTree
 {
@@ -891,7 +901,7 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 
 int BplusTree::count_memory(Node *curr)
 {
-	int retVal = sizeof(curr); // As long as we enter this method, count as 1 as we are iterating a node to be in this method (this is necessary to account for internal nodes).
+	int retVal = curr->getMemSize(); // As long as we enter this method, count as 1 as we are iterating a node to be in this method (this is necessary to account for internal nodes).
 
 	if (curr == nullptr) // Edge case
 		return 0;
