@@ -117,7 +117,7 @@ void experiment2() {
 	string firstChildContent = "First Child Keys: ";
 	int* firstChildKeys = firstChild->getKeys();
 	for (int i = 0; i < firstChild->getSize(); i++) {
-		firstChildContent = firstChildContent.append(to_string(firstChildKeys[i]) + "(" + to_string(firstChild->getBlocks()[i]) + "," + to_string(firstChild->getOffsets()[i]) + ") ");
+		firstChildContent = firstChildContent.append(to_string(firstChildKeys[i]) + (verbose ? "(" + to_string(firstChild->getBlocks()[i]) + "," + to_string(firstChild->getOffsets()[i]) + ") " : " "));
 	}
 	std::cout << rootNodeContent << endl << firstChildContent << "\n\n";
 
@@ -131,8 +131,7 @@ void experiment3() {
 
 void experiment4() {
 	std::cout << endl << "(Experiment 4)" << endl;
-	//tree.rangequery(30000, 40000);
-	tree.rangequery(500, 501);
+	tree.rangequery(30000, 40000);
 }
 
 void experiment5() {
@@ -152,7 +151,7 @@ void experiment5() {
 	string firstChildContent = "First Child Keys: ";
 	int* firstChildKeys = firstChild->getKeys();
 	for (int i = 0; i < firstChild->getSize(); i++) {
-		firstChildContent = firstChildContent.append(to_string(firstChildKeys[i]) + "(" + to_string(firstChild->getBlocks()[i]) + "," + to_string(firstChild->getOffsets()[i]) + ") ");
+		firstChildContent = firstChildContent.append(to_string(firstChildKeys[i]) + (verbose ? "(" + to_string(firstChild->getBlocks()[i]) + "," + to_string(firstChild->getOffsets()[i]) + ") " : " "));
 	}
 	std::cout << rootNodeContent << endl << firstChildContent << "\n\n";
 }
