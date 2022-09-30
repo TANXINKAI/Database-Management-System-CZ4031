@@ -23,32 +23,28 @@ void experiment4();
 void experiment5();
 void testTree();
 void testTree2();
-void testTree3();
 void sampleRetrieve();
 void parseData(int limit);
 
 int main()
 {
 	// try{
-	if(true){ //Set to true to run testTree() only
+	if(false){ //Set to true to run testTree() only
 		storage->verbose = true;
-		testTree3();
-		// testTree2();
+		testTree2();
 		sampleRetrieve();
 		std::cout << "Press ENTER Key To Exit" << endl;
 		cin.get();
 		return 0;
 	}
 
-
-
-	// parseData(0);
-	// buildIndex();
-	// experiment1();
-	// experiment2();
-	// experiment3();
-	// experiment4();
-	// experiment5();
+	parseData(0);
+	buildIndex();
+	experiment1();
+	experiment2();
+	experiment3();
+	experiment4();
+	experiment5();
 }
 
 void buildIndex() {
@@ -89,7 +85,7 @@ void experiment2() {
 	Node* root = tree.getRoot();
 	std::cout << endl << "(Experiment 2)" << endl << "Tree Parameter n: " << to_string(tree.getTreeOrder())
 		<< "\nNumber of Nodes in Tree: " << to_string(tree.count_nodes(root))
-		<< "\nMem in Tree (testing): " << to_string(tree.count_memory(root)) << " MB"
+		// << "\nMem in Tree (testing): " << to_string(tree.count_memory(root)) << " MB"
 		<< "\nTree Height: " << to_string(tree.getHeight()) << "\n\n";
 
 	string rootNodeContent = "Root Node Keys: ";
@@ -105,7 +101,6 @@ void experiment2() {
 	}
 	std::cout << rootNodeContent << endl << firstChildContent << "\n\n";
 
-	//tree.display(root);
 }
 
 void experiment3() {
@@ -119,8 +114,38 @@ void experiment4() {
 }
 
 void experiment5() {
+	Node* root = tree.getRoot();
+
 	std::cout << endl << "(Experiment 5)" << endl;
-	tree.remove(1000);
+	int nodes_deleted = 0;
+	int tree_nodes = tree.count_nodes(root);
+
+	while(tree.remove(1000) != -1){
+		
+		if(tree_nodes != tree.count_nodes(root)){
+			nodes_deleted += 1;
+		}
+
+		std::cout << "\nNumber of Nodes in Tree: " << to_string(tree.count_nodes(root))
+		<< "\nTree Height: " << to_string(tree.getHeight()) << "\n\n";
+
+		string rootNodeContent = "Root Node Keys: ";
+		int* rootKeys = root->getKeys();
+		for (int i = 0; i < root->getSize(); i++) {
+			rootNodeContent = rootNodeContent.append(to_string(rootKeys[i]) + " ");
+		}
+		Node* firstChild = root->getPointers()[0];
+		string firstChildContent = "First Child Keys: ";
+		int* firstChildKeys = firstChild->getKeys();
+		for (int i = 0; i < firstChild->getSize(); i++) {
+			firstChildContent = firstChildContent.append(to_string(firstChildKeys[i]) + "(" + to_string(firstChild->getBlocks()[i]) + "," + to_string(firstChild->getOffsets()[i]) + ") ");
+		}
+		std::cout << rootNodeContent << endl << firstChildContent << "\n\n";
+
+	};
+
+	std::cout << "\nNumber of times node is deleted: " << nodes_deleted << "\n" << endl;
+
 	// tree.remove(33858);
 }
 
@@ -215,227 +240,6 @@ void testTree2() {
 	std::cout << node.getRoot();
 	std::cout << endl << endl;
 	// node.leafNodedisplay(node.getRoot());
-
-}
-
-void testTree3() {
-	BplusTree node(3);
-
-	int t_case = 5;
-
-	switch(t_case){
-		case 1:
-			node.insert(1, 0, 0);
-			node.insert(4, 0, 1);
-			node.insert(5, 0, 2);
-			node.insert(7, 0, 4);
-			node.insert(17, 0, 3);
-			node.insert(19, 0, 4);
-			node.insert(20, 0, 2);
-			node.insert(21, 0, 3);
-			node.insert(25, 0, 0);
-			node.insert(31, 0, 4);
-
-			std::cout << "display before del" << endl;
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-			std::cout << "display after deletion 5" << endl;
-			node.remove(5);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-			std::cout << "display after deletion 17" << endl;
-			node.remove(17);
-			node.display(node.getRoot());
-			break;
-		case 2:
-			node.insert(1, 0, 0);
-			node.insert(4, 0, 1);
-			node.insert(7, 0, 4);
-			node.insert(10, 0, 4);
-			node.insert(17, 0, 3);
-			node.insert(19, 0, 4);
-			node.insert(20, 0, 2);
-			node.insert(21, 0, 3);
-			node.insert(25, 0, 0);
-			node.insert(31, 0, 4);
-
-			std::cout << "display before del" << endl;
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-			std::cout << "display after deletion 4" << endl;
-			node.remove(4);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-			node.leafNodedisplay(node.getRoot());
-
-			break;
-		case 3:
-			node.insert(1, 0, 0);
-			node.insert(4, 0, 1);
-			node.insert(7, 0, 4);
-			node.insert(10, 0, 4);
-			node.insert(20, 0, 2);
-			node.insert(21, 0, 3);
-			node.insert(25, 0, 0);
-			node.insert(31, 0, 4);
-
-			std::cout << "display before del" << endl;
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-			std::cout << "display after deletion 4" << endl;
-			node.remove(4);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-			// node.leafNodedisplay(node.getRoot());
-
-			std::cout << "display after deletion 25" << endl;
-			node.remove(25);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-			std::cout << "display after deletion 20" << endl;
-			node.remove(20);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-			std::cout << "display after deletion 31" << endl;
-			node.remove(31);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-			node.leafNodedisplay(node.getRoot());
-			break;
-
-			case 4:
-			node.insert(1, 0, 0);
-			node.insert(4, 0, 1);
-			node.insert(7, 0, 2);
-			node.insert(10, 0, 4);
-			node.insert(17, 0, 3);
-			node.insert(19, 0, 4);
-			node.insert(20, 0, 0);
-			node.insert(21, 0, 1);
-			node.insert(25, 0, 2);
-			node.insert(28, 0, 3);
-			node.insert(31, 0, 4);
-
-
-			std::cout << "display before del" << endl;
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-			std::cout << "display after deletion 5 (fail) & 7" << endl;
-			node.remove(5);
-			node.remove(7);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-			std::cout << "display after deletion 17 & 21" << endl;
-			node.remove(17);
-			node.remove(21);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-
-			// Bug in deletion of 1, merge and deletion of root node.
-			std::cout << "display after deletion 1" << endl;
-			node.remove(10);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-
-
-			std::cout << "display after deletion 25" << endl;
-			node.remove(25);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-			// node.leafNodedisplay(node.getRoot());
-
-
-			// std::cout << "display after deletion 28 & 31" << endl;
-			node.remove(28);
-			node.remove(31);
-			node.display(node.getRoot());
-			std::cout << "display after deletion 4 & 19" << endl;
-			node.remove(4);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-			node.remove(19);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-			// std::cout << "display after deletion 10" << endl;
-			// node.remove(10);
-			// node.display(node.getRoot());
-			// std::cout << endl << endl;
-
-			case 5:
-			node.insert(1, 0, 0);
-			node.insert(2, 0, 3);
-			node.insert(3, 0, 4);
-			node.insert(4, 0, 1);
-			node.insert(5, 0, 2);
-			node.insert(6, 0, 2);
-			node.insert(7, 0, 2);
-			node.insert(8, 0, 4);
-			node.insert(9, 0, 2);
-			node.insert(10, 0, 4);
-			node.insert(11, 0, 4);
-			node.insert(12, 0, 4);
-			node.insert(13, 0, 3);
-			node.insert(14, 0, 3);
-			node.insert(15, 0, 3);
-			node.insert(16, 0, 3);
-			node.insert(17, 0, 3);
-			node.insert(18, 0, 3);
-			node.insert(19, 0, 4);
-			node.insert(20, 0, 0);
-			node.insert(21, 0, 1);
-			node.insert(23, 0, 3);
-			node.insert(24, 0, 2);
-			node.insert(25, 0, 2);
-			node.insert(26, 0, 3);
-			node.insert(27, 0, 3);
-			node.insert(28, 0, 3);
-			node.insert(29, 0, 3);
-			node.insert(30, 0, 3);
-			node.insert(31, 0, 4);
-			node.insert(32, 0, 3);
-			node.insert(33, 0, 3);
-			node.insert(34, 0, 1);
-
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-			node.remove(5);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-			node.remove(7);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-			node.remove(27);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-			node.remove(19);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-
-            node.remove(26);
-			node.display(node.getRoot());
-			std::cout << endl << endl;
-			// node.remove(19);
-			// node.display(node.getRoot());
-			// std::cout << endl << endl;
-
-			// node.remove(11);
-			// node.display(node.getRoot());
-			// std::cout << endl << endl;
-			break;
-	}
 
 }
 
