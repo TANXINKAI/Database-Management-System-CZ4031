@@ -652,7 +652,7 @@ void BplusTree::remove(int x)
 		if (!found)
 		{
 			std::cout << "curr->key[0] : " << curr->key[0]<< endl;
-			
+
 			std::cout << x <<" Not found\n";
 			return;
 		}
@@ -684,6 +684,9 @@ void BplusTree::remove(int x)
 		if (curr->size >= (MAX_KEYS + 1) / 2)
 		{
 		    // meets minimum size criteria
+		    int nkey;
+            nkey = curr->key[0];
+			rebuild(root, x, nkey);
 			return;
 		}
 		int nkey;
@@ -760,8 +763,6 @@ void BplusTree::remove(int x)
 					rightNode->key[i] = rightNode->key[i + 1];
 				}
 				*/
-<<<<<<< HEAD
-=======
 
 				// rebuild for key deleted is updated scenario
 				nkey = curr->key[0];
@@ -771,7 +772,6 @@ void BplusTree::remove(int x)
 				nkey = rightNode->key[0];
 				rebuild(root, curr->key[curr->size -1], nkey);
 
->>>>>>> caf50dbdf9a4a16c80ca75cfe58bd436eb25ed93
 				parent->key[rightSibling - 1] = rightNode->key[0];
 				return;
 			}
@@ -780,14 +780,16 @@ void BplusTree::remove(int x)
 		{
 			std::cout<< "Test second left sibling >= 0" <<endl;
 			Node *leftNode = parent->ptr[leftSibling];
-			
+
 			// rebuild for key merged updated scenario
 			// nkey = leftNode->key[leftNode->size];
-			nkey = curr->key[0];
-			
+			// case 2
+			int xtemp;
+			xtemp = curr->key[0];
+
 			for (int i = leftNode->size, j = 0; j < curr->size; i++, j++)
 			{
-			    // adding current node content into left node content
+			    // adding current node(right) content into left node content
 				leftNode->key[i] = curr->key[j];
 				leftNode->ptr[i] = curr->ptr[j];
 			}
@@ -798,8 +800,16 @@ void BplusTree::remove(int x)
 			leftNode->ptr[leftNode->size] = curr->ptr[curr->size];
 			// removing current node
 			removeInternal(parent->key[leftSibling], parent, curr);
-			
+
+			// rebuilding is done after all adjustments to leaf and its immediate parent...
+			// merging case where deleted key is the most left key of the leaf node x=deleted node (Case 1), if not key[0] being deleted, its okay cause parent tree can never find it, dn rebuild
+			// key that could also require update is the curr node(right) first key (Case 2), cause it will be "deleted"/merged
+			// new key should be the updated left node first key
+			nkey = leftNode->key[0];
 			rebuild(root, x, nkey);
+
+			//case 2 , see line 785 for xtemp. its the 1st key of the right node(curr)
+			rebuild(root,xtemp,nkey);
 
 			delete[] curr->key;
 			delete[] curr->ptr;
@@ -807,17 +817,20 @@ void BplusTree::remove(int x)
 		}
 		else if (rightSibling <= parent->size)
 		{
-			
 			std::cout<< "Test second rightSibling <= parent->size" <<endl;
 			std::cout<< "Testing rightSibling = " << rightSibling <<endl;
 			Node *rightNode = parent->ptr[rightSibling];
-			
-			nkey = rightNode->key[0];
-			
+
+			// rebuild for key merged updated scenario (it should be the same as the above, since we are shifting right node to left node
+            // then deleting the right node
+			// case 2
+			int xtemp;
+			xtemp = rightNode->key[0];
+
 			// Node *tempMergeNode = parent->ptr[leftSibling];
 			for (int i = curr->size, j = 0; j < rightNode->size; i++, j++)
 			{
-			    // adding right node content into current node content
+			    // adding right node content into current node(left) content
 				curr->key[i] = rightNode->key[j];
 				// curr->ptr[i] = rightNode->ptr[j];
 			}
@@ -827,17 +840,24 @@ void BplusTree::remove(int x)
 			curr->ptr[curr->size] = rightNode->ptr[rightNode->size];
 			std::cout << "Merging two leaf nodes\n";
 			// delete the right node
-<<<<<<< HEAD
-=======
+
 			std::cout << "parent->key[rightSibling - 1] : " << parent->key[rightSibling - 1] << endl;
 			std::cout << "parent->key[0] : " << parent->key[0] << endl;
 			std::cout << "rightNode->key[0] / child : " << rightNode->key[0] << endl;
 
->>>>>>> caf50dbdf9a4a16c80ca75cfe58bd436eb25ed93
+
 			removeInternal(parent->key[rightSibling - 1], parent, rightNode);
-			
+
+			// rebuilding is done after all adjustments to leaf and its immediate parent...
+			// merging case where deleted key is the most left key of the leaf node x=deleted node (Case 1), if not key[0] being deleted, its okay cause parent tree can never find it, dn rebuild
+			// key that could also require update is the curr node(right) first key (Case 2), cause it will be "deleted"/merged
+			// new key should be the updated left node first key
+			nkey = curr->key[0];
 			rebuild(root, x, nkey);
-			
+
+			//case 2 , see line 825 for xtemp. its the 1st key of the right node
+			rebuild(root,xtemp,nkey);
+
 			delete[] rightNode->key;
 			delete[] rightNode->ptr;
 			delete rightNode;
@@ -1038,7 +1058,7 @@ void BplusTree::rebuild(Node *curr, int oldKey, int nKey)
 
 	std::cout<< "rebuild : " <<endl;
 	std::cout<< "\toldKey"<< oldKey <<"\tnkey:" << nKey <<endl;
-	
+
 	while (curr->IS_LEAFNODE == false)
 		{
 			std::cout << " root->size : " << root->size << endl;

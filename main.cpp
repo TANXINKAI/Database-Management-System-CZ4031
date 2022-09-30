@@ -91,7 +91,7 @@ void experiment2() {
 		<< "\nNumber of Nodes in Tree: " << to_string(tree.count_nodes(root))
 		<< "\nMem in Tree (testing): " << to_string(tree.count_memory(root)) << " MB"
 		<< "\nTree Height: " << to_string(tree.getHeight()) << "\n\n";
-		
+
 	string rootNodeContent = "Root Node Keys: ";
 	int* rootKeys = root->getKeys();
 	for (int i = 0; i < root->getSize(); i++) {
@@ -127,7 +127,7 @@ void experiment5() {
 void testTree() {
 	BplusTree node(3);
 	node.storage = storage;
-	
+
 	unsigned char tconst[10] = {'a','b','c','d','e','f','g','h','i','j'};
 	for(int c=0;c<21;c++){
 		MovieInfo mi(tconst,0.0,c*10+5);
@@ -177,7 +177,7 @@ void testTree() {
 
 	// node.search(15);
 	// node.remove(15);
-	
+
 }
 
 void testTree2() {
@@ -198,9 +198,9 @@ void testTree2() {
 	node.display(node.getRoot());
 	std::cout << endl << endl;
 
-	
+
 	node.insert(20, 0, 0);
-	
+
 
 	std::cout << "display after insertion 20" << endl;
 	node.display(node.getRoot());
@@ -220,11 +220,11 @@ void testTree2() {
 
 void testTree3() {
 	BplusTree node(3);
-	
-	int t_case = 5; 
-	
+
+	int t_case = 5;
+
 	switch(t_case){
-		case 1: 
+		case 1:
 			node.insert(1, 0, 0);
 			node.insert(4, 0, 1);
 			node.insert(5, 0, 2);
@@ -235,7 +235,7 @@ void testTree3() {
 			node.insert(21, 0, 3);
 			node.insert(25, 0, 0);
 			node.insert(31, 0, 4);
-			
+
 			std::cout << "display before del" << endl;
 			node.display(node.getRoot());
 			std::cout << endl << endl;
@@ -246,7 +246,7 @@ void testTree3() {
 			std::cout << endl << endl;
 			std::cout << "display after deletion 17" << endl;
 			node.remove(17);
-			node.display(node.getRoot());					
+			node.display(node.getRoot());
 			break;
 		case 2:
 			node.insert(1, 0, 0);
@@ -259,7 +259,7 @@ void testTree3() {
 			node.insert(21, 0, 3);
 			node.insert(25, 0, 0);
 			node.insert(31, 0, 4);
-			
+
 			std::cout << "display before del" << endl;
 			node.display(node.getRoot());
 			std::cout << endl << endl;
@@ -280,7 +280,7 @@ void testTree3() {
 			node.insert(21, 0, 3);
 			node.insert(25, 0, 0);
 			node.insert(31, 0, 4);
-			
+
 			std::cout << "display before del" << endl;
 			node.display(node.getRoot());
 			std::cout << endl << endl;
@@ -325,28 +325,28 @@ void testTree3() {
 			std::cout << "display before del" << endl;
 			node.display(node.getRoot());
 			std::cout << endl << endl;
-			
+
 			std::cout << "display after deletion 5 (fail) & 7" << endl;
 			node.remove(5);
 			node.remove(7);
 			node.display(node.getRoot());
 			std::cout << endl << endl;
-	
+
 			std::cout << "display after deletion 17 & 21" << endl;
 			node.remove(17);
 			node.remove(21);
 			node.display(node.getRoot());
 			std::cout << endl << endl;
-			
-			
+
+
 			// Bug in deletion of 1, merge and deletion of root node.
 			std::cout << "display after deletion 1" << endl;
 			node.remove(10);
 			node.display(node.getRoot());
 			std::cout << endl << endl;
-			
-			
-			
+
+
+
 			std::cout << "display after deletion 25" << endl;
 			node.remove(25);
 			node.display(node.getRoot());
@@ -369,7 +369,7 @@ void testTree3() {
 			// node.remove(10);
 			// node.display(node.getRoot());
 			// std::cout << endl << endl;
-			
+
 			case 5:
 			node.insert(1, 0, 0);
 			node.insert(2, 0, 3);
@@ -420,6 +420,13 @@ void testTree3() {
 			node.display(node.getRoot());
 			std::cout << endl << endl;
 
+			node.remove(19);
+			node.display(node.getRoot());
+			std::cout << endl << endl;
+
+            node.remove(26);
+			node.display(node.getRoot());
+			std::cout << endl << endl;
 			// node.remove(19);
 			// node.display(node.getRoot());
 			// std::cout << endl << endl;
@@ -429,7 +436,7 @@ void testTree3() {
 			// std::cout << endl << endl;
 			break;
 	}
-	
+
 }
 
 void sampleRetrieve() {
@@ -447,7 +454,7 @@ void parseData(int limit) {
 	int dataCount = 0;
 	fstream file;
 	file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
-	
+
 	//file.open("C:\\Users\\austi\\source\\repos\\cz4031\\cz4031\\data.tsv", ios::in);
 	if (file.is_open()) {
 		string line;
