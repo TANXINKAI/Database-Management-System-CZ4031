@@ -57,6 +57,26 @@ public:
 		retVal += sizeof(addressOffset) * MAX_KEYS;
 		return retVal;
 	}
+	int getOrderWorstCase(int limit){
+		int base = 0;
+		base += sizeof(bool);
+		base += sizeof(int);
+
+		int iterVal = base;
+		do{
+			iterVal = base;
+			
+			iterVal += sizeof(int) * MAX_KEYS;
+			iterVal += sizeof(Node*) * (MAX_KEYS + 1);
+			iterVal += sizeof(int) * MAX_KEYS;
+			iterVal += sizeof(int) * MAX_KEYS;
+			MAX_KEYS++;
+		}while(iterVal <= limit);
+
+		//Loop exited, hence limit exceeded. Deduct 1 from MAX_KEYS
+		MAX_KEYS--;
+		return MAX_KEYS;
+	}
 };
 class BplusTree
 {

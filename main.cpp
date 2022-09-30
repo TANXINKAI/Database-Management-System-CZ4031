@@ -69,7 +69,8 @@ int main()
 void buildIndex() {
 	std::cout << "Building index (B+ Tree)" << endl;
 	auto timeStart = high_resolution_clock::now();
-	tree = BplusTree(storage->blockManager.getMovieInfoPerBlock());
+	Node tmp;
+	tree = BplusTree(tmp.getOrderWorstCase(storage->getBlockSize()));
 	tree.storage = storage;
 	int dataCount = 0;
 	for (int i = 0; i < storage->blockManager.getBlockCount(); i++) {
