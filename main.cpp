@@ -13,8 +13,9 @@ using namespace std::chrono;
 
 //Initialize storage instance on the heap
 //Bitshift 1 with scale of data storage
-Storage* storage = new Storage(200, 100 * (1 << ENUM_STORAGE_SCALE_MEGABYTE));
+Storage* storage = new Storage(200, 100 * (1 << ENUM_STORAGE_SCALE_MEGABYTE),true);
 BplusTree tree = NULL;
+bool verbose = false;
 void buildIndex();
 void experiment1();
 void experiment2();
@@ -28,7 +29,7 @@ void parseData(int limit);
 int main()
 {
 	try{
-	if(true){ //Set to true to run testTree() only
+	if(false){ //Set to true to run testTree() only
 		storage->verbose = true;
 		testTree();
 		sampleRetrieve();
@@ -36,6 +37,19 @@ int main()
 		cin.get();
 		return 0;
 	}
+	parseData(0);
+	buildIndex();
+	experiment1();
+	experiment2();
+	experiment3();
+	experiment4();
+	experiment5();
+
+	free(storage);
+
+	
+	storage = new Storage(500, 100 * (1 << ENUM_STORAGE_SCALE_MEGABYTE),true);
+	tree = NULL;
 	parseData(0);
 	buildIndex();
 	experiment1();
@@ -71,7 +85,7 @@ void buildIndex() {
 				if (storage->verbose)
 					std::cout << message.what() << endl;
 			}
-			if (dataCount % 50000 == 0)
+			if (dataCount % 50000 == 0 && verbose)
 				std::cout << to_string(dataCount) << " records indexed." << endl;
 
 		}
@@ -88,9 +102,10 @@ void experiment1() {
 
 void experiment2() {
 	Node* root = tree.getRoot();
+	double sizeMB = ((double)tree.count_memory(root) / (double)(1 << ENUM_STORAGE_SCALE_MEGABYTE));
 	std::cout << endl << "(Experiment 2)" << endl << "Tree Parameter n: " << to_string(tree.getTreeOrder())
 		<< "\nNumber of Nodes in Tree: " << to_string(tree.count_nodes(root))
-		<< "\nMem in Tree (testing): " << to_string(tree.count_memory(root)) << " MB"
+		<< "\nMem in Tree (testing): " << to_string(sizeMB) << " MB"
 		<< "\nTree Height: " << to_string(tree.getHeight()) << "\n\n";
 		
 	string rootNodeContent = "Root Node Keys: ";
@@ -116,13 +131,30 @@ void experiment3() {
 
 void experiment4() {
 	std::cout << endl << "(Experiment 4)" << endl;
-	// tree.rangequery(30000, 40000);
+	//tree.rangequery(30000, 40000);
 	tree.rangequery(500, 501);
 }
 
 void experiment5() {
 	std::cout << endl << "(Experiment 5)" << endl;
 	tree.remove(1000);
+	Node* root = tree.getRoot();
+	double sizeMB = ((double)tree.count_memory(root) / (double)(1 << ENUM_STORAGE_SCALE_MEGABYTE));
+	std::cout << "Number of Nodes in Tree: " << to_string(tree.count_nodes(root))
+		<< "\nMem in Tree (testing): " << to_string(sizeMB) << " MB"
+		<< "\nTree Height: " << to_string(tree.getHeight()) << endl;
+	string rootNodeContent = "Root Node Keys: ";
+	int* rootKeys = root->getKeys();
+	for (int i = 0; i < root->getSize(); i++) {
+		rootNodeContent = rootNodeContent.append(to_string(rootKeys[i]) + " ");
+	}
+	Node* firstChild = root->getPointers()[0];
+	string firstChildContent = "First Child Keys: ";
+	int* firstChildKeys = firstChild->getKeys();
+	for (int i = 0; i < firstChild->getSize(); i++) {
+		firstChildContent = firstChildContent.append(to_string(firstChildKeys[i]) + "(" + to_string(firstChild->getBlocks()[i]) + "," + to_string(firstChild->getOffsets()[i]) + ") ");
+	}
+	std::cout << rootNodeContent << endl << firstChildContent << "\n\n";
 }
 
 void testTree() {
@@ -187,9 +219,9 @@ void parseData(int limit) {
 	auto timeStart = high_resolution_clock::now();
 	int dataCount = 0;
 	fstream file;
-	file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
+	//file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
 	
-	//file.open("C:\\Users\\austi\\source\\repos\\cz4031\\cz4031\\data.tsv", ios::in);
+	file.open("data.tsv", ios::in);
 	if (file.is_open()) {
 		string line;
 		bool firstLine = true;
@@ -213,6 +245,7 @@ void parseData(int limit) {
 						switch (counter) {
 						case 0:
 							tconst[i] = line[i];
+							tconst[10] = '\0';
 							break;
 						case 1:
 							rating[i - offset] = line[i];
@@ -228,12 +261,12 @@ void parseData(int limit) {
 				storage->insertMovieInfo(mi);
 				dataCount++;
 			}
-			if (dataCount % 50000 == 0 && dataCount != 0)
+			if (dataCount % 50000 == 0 && dataCount != 0 && verbose)
 				std::cout << to_string(dataCount) << " records inserted." << endl;
 		}
 		file.close();
 		auto timeEnd = high_resolution_clock::now();
-		if(dataCount < 50000)
+		if(dataCount < 50000 && verbose)
 			std::cout << to_string(dataCount) << " records inserted." << endl;
 		std::cout << "Data insertion of " << to_string(dataCount) << " records completed in " << to_string(duration_cast<milliseconds>(timeEnd - timeStart).count()) << " milliseconds" << endl << endl;
 
