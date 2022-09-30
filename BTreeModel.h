@@ -77,6 +77,8 @@ public:
 	void leafNodedisplay(Node *);
 	void leafNodedisplaylimited(Node *, int);
 
+	void rebuild(Node *, int , int);
+
 	Storage *storage = nullptr;
 };
 Node::Node()
@@ -444,7 +446,7 @@ void BplusTree::rangequery(int lb, int hb)
 
 		while (curr->key[0] <= hb)
 		{
-			std::cout << curr->size << endl;
+			std::cout << "curr->size : " << curr->size << endl;
 			for (int i = 0; i < curr->size; i++)
 			{
 				if (curr->key[i] < lb || curr->key[i] > hb)
@@ -613,9 +615,11 @@ void BplusTree::remove(int x)
 		int leftSibling, rightSibling;
 		while (curr->IS_LEAFNODE == false)
 		{
+			std::cout << " curr->size : " << curr->size << endl;
 			for (int i = 0; i < curr->size; i++)
 			{
 				parent = curr;
+				// out of bound for i = 0, no need for shift.
 				leftSibling = i - 1;
 				rightSibling = i + 1;
 				if (x < curr->key[i])
@@ -628,6 +632,7 @@ void BplusTree::remove(int x)
 					leftSibling = i;
 					rightSibling = i + 2;
 					curr = curr->ptr[i + 1];
+					std::cout << "curr->key[curr->size] : " << curr->key[curr->size]<< endl;
 					break;
 				}
 			}
@@ -636,17 +641,22 @@ void BplusTree::remove(int x)
 		int pos;
 		for (pos = 0; pos < curr->size; pos++)
 		{
+			std::cout << "curr->key[pos]: " << curr->key[pos] <<"\t" <<endl;
 			if (curr->key[pos] == x)
 			{
 				found = true;
+				std::cout << x <<"  Found and removed\n" <<endl;
 				break;
 			}
 		}
 		if (!found)
 		{
-			std::cout << "Not found\n";
+			std::cout << "curr->key[0] : " << curr->key[0]<< endl;
+			
+			std::cout << x <<" Not found\n";
 			return;
 		}
+		// shift position of keys after position of key to be removed.
 		for (int i = pos; i < curr->size; i++)
 		{
 			curr->key[i] = curr->key[i + 1];
@@ -676,8 +686,10 @@ void BplusTree::remove(int x)
 		    // meets minimum size criteria
 			return;
 		}
+		int nkey;
 		if (leftSibling >= 0)
 		{
+			std::cout<< "Test first left sibling >= 0" <<endl;
 			Node *leftNode = parent->ptr[leftSibling];
 			if (leftNode->size >= (MAX_KEYS + 1) / 2 + 1)
 			{
@@ -699,12 +711,24 @@ void BplusTree::remove(int x)
 				// don't need to update the keys of left sibling because size--, any traversal will not reach it. Insertion will overwrite
 				// on the parent node, edit the smallest number of current node
 				parent->key[leftSibling] = curr->key[0];
+
+				// rebuild for key deleted is updated scenario
+				nkey = curr->key[0];
+				rebuild(root, x, nkey);
+
+				// rebuild for key not deleted (new first index) has to be updated scenario
+				nkey = curr->key[0];
+				rebuild(root, curr->key[1], nkey);
+
 				return;
 			}
 		}
 		if (rightSibling <= parent->size)
 		{
+			std::cout<< "Test first rightSibling <= parent->size" <<endl;
 			Node *rightNode = parent->ptr[rightSibling];
+
+
 			if (rightNode->size >= (MAX_KEYS + 1) / 2 + 1)
 			{
 			    // borrow smallest from right sibling
@@ -736,17 +760,36 @@ void BplusTree::remove(int x)
 					rightNode->key[i] = rightNode->key[i + 1];
 				}
 				*/
+<<<<<<< HEAD
+=======
+
+				// rebuild for key deleted is updated scenario
+				nkey = curr->key[0];
+				rebuild(root, x, nkey);
+
+				// rebuild for key not deleted (new first index) has to be updated scenario
+				nkey = rightNode->key[0];
+				rebuild(root, curr->key[curr->size -1], nkey);
+
+>>>>>>> caf50dbdf9a4a16c80ca75cfe58bd436eb25ed93
 				parent->key[rightSibling - 1] = rightNode->key[0];
 				return;
 			}
 		}
 		if (leftSibling >= 0)
 		{
+			std::cout<< "Test second left sibling >= 0" <<endl;
 			Node *leftNode = parent->ptr[leftSibling];
+			
+			// rebuild for key merged updated scenario
+			// nkey = leftNode->key[leftNode->size];
+			nkey = curr->key[0];
+			
 			for (int i = leftNode->size, j = 0; j < curr->size; i++, j++)
 			{
 			    // adding current node content into left node content
 				leftNode->key[i] = curr->key[j];
+				leftNode->ptr[i] = curr->ptr[j];
 			}
 
 			leftNode->ptr[leftNode->size] = nullptr;   // Why nullptr?
@@ -755,28 +798,52 @@ void BplusTree::remove(int x)
 			leftNode->ptr[leftNode->size] = curr->ptr[curr->size];
 			// removing current node
 			removeInternal(parent->key[leftSibling], parent, curr);
+			
+			rebuild(root, x, nkey);
+
 			delete[] curr->key;
 			delete[] curr->ptr;
 			delete curr;
 		}
 		else if (rightSibling <= parent->size)
 		{
+			
+			std::cout<< "Test second rightSibling <= parent->size" <<endl;
+			std::cout<< "Testing rightSibling = " << rightSibling <<endl;
 			Node *rightNode = parent->ptr[rightSibling];
+			
+			nkey = rightNode->key[0];
+			
+			// Node *tempMergeNode = parent->ptr[leftSibling];
 			for (int i = curr->size, j = 0; j < rightNode->size; i++, j++)
 			{
 			    // adding right node content into current node content
 				curr->key[i] = rightNode->key[j];
+				// curr->ptr[i] = rightNode->ptr[j];
 			}
 			curr->ptr[curr->size] = nullptr;
 			curr->size += rightNode->size;
+			std::cout << "checking size of curr->size: "<< curr->size <<"\n";
 			curr->ptr[curr->size] = rightNode->ptr[rightNode->size];
 			std::cout << "Merging two leaf nodes\n";
 			// delete the right node
+<<<<<<< HEAD
+=======
+			std::cout << "parent->key[rightSibling - 1] : " << parent->key[rightSibling - 1] << endl;
+			std::cout << "parent->key[0] : " << parent->key[0] << endl;
+			std::cout << "rightNode->key[0] / child : " << rightNode->key[0] << endl;
+
+>>>>>>> caf50dbdf9a4a16c80ca75cfe58bd436eb25ed93
 			removeInternal(parent->key[rightSibling - 1], parent, rightNode);
+			
+			rebuild(root, x, nkey);
+			
 			delete[] rightNode->key;
 			delete[] rightNode->ptr;
 			delete rightNode;
 		}
+		// first index removed.
+		return;
 	}
 }
 void BplusTree::removeInternal(int x, Node *curr, Node *child)
@@ -785,19 +852,11 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 	{
 		if (curr->size == 1)
 		{
-			if (curr->ptr[1] == child)
-			{
-				delete[] child->key;
-				delete[] child->ptr;
-				delete child;
-				root = curr->ptr[0];
-				delete[] curr->key;
-				delete[] curr->ptr;
-				delete curr;
-				std::cout << "Changed root node\n";
-				return;
-			}
-			else if (curr->ptr[0] == child)
+			std::cout<<"removeinternal : "<<curr->ptr[0] <<endl;
+			std::cout <<"curr->ptr[1]:" << curr->ptr[1]->getKeys()[0] << endl;
+			std::cout <<"curr->ptr[0]:" << curr->ptr[0]->getKeys()[0] << endl;
+			// left child removed
+			if (curr->ptr[0] == child)
 			{
 				delete[] child->key;
 				delete[] child->ptr;
@@ -806,7 +865,21 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 				delete[] curr->key;
 				delete[] curr->ptr;
 				delete curr;
-				std::cout << "Changed root node\n";
+				std::cout << "Changed root node curr->ptr[0] == child\n";
+				return;
+			}
+			// right child removed
+			else if (curr->ptr[1] == child)
+			{
+				delete[] child->key;
+				delete[] child->ptr;
+				delete child;
+				root = curr->ptr[0];
+				delete[] curr->key;
+				delete[] curr->ptr;
+				delete curr;
+				std::cout <<"root:" << root->getKeys()[0] << endl;
+				std::cout << "Changed root node curr->ptr[1] == child\n";
 				return;
 			}
 		}
@@ -935,6 +1008,66 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 		removeInternal(parent->key[rightSibling - 1], parent, rightNode);
 	}
 }
+
+void BplusTree::rebuild(Node *curr, int oldKey, int nKey)
+{
+// 			while (curr->IS_LEAFNODE == false)
+// 		{
+// 			std::cout << " curr->size : " << curr->size << endl;
+// 			for (int i = 0; i < curr->size; i++)
+// 			{
+// 				parent = curr;
+// 				// out of bound for i = 0, no need for shift.
+// 				leftSibling = i - 1;
+// 				rightSibling = i + 1;
+// 				if (x < curr->key[i])
+// 				{
+// 					curr = curr->ptr[i];
+// 					break;
+// 				}
+// 				if (i == curr->size - 1)
+// 				{
+// 					leftSibling = i;
+// 					rightSibling = i + 2;
+// 					curr = curr->ptr[i + 1];
+// 					std::cout << "curr->key[curr->size] : " << curr->key[curr->size]<< endl;
+// 					break;
+// 				}
+// 			}
+// 		}
+
+	std::cout<< "rebuild : " <<endl;
+	std::cout<< "\toldKey"<< oldKey <<"\tnkey:" << nKey <<endl;
+	
+	while (curr->IS_LEAFNODE == false)
+		{
+			std::cout << " root->size : " << root->size << endl;
+			for (int i = 0; i < curr->size; i++)
+			{
+				// if (curr->key[i] == oldKey)
+				// 	{
+				// 		std::cout << " curr->key[i] == oldKey " << root->size << endl;
+				// 		curr->key[i] = nKey;
+				// 	}
+				if (oldKey <= curr->key[i])
+				{
+					if (curr->key[i] == oldKey)
+					{
+						std::cout << " curr->key[i] == oldKey " << root->size << endl;
+						curr->key[i] = nKey;
+					}
+					curr = curr->ptr[i];
+					break;
+				}
+				if (i == curr->size - 1)
+				{
+					curr = curr->ptr[i + 1];
+					break;
+				}
+			}
+		}
+}
+
 
 int BplusTree::count_memory(Node *curr)
 {
