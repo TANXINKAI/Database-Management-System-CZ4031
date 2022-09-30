@@ -68,9 +68,11 @@ int main()
 
 void buildIndex() {
 	std::cout << "Building index (B+ Tree)" << endl;
-	auto timeStart = high_resolution_clock::now();
 	Node tmp;
-	tree = BplusTree(tmp.getOrderWorstCase(storage->getBlockSize()));
+	int order = tmp.getOrderWorstCase(storage->getBlockSize());
+	std::cout << "B+ Tree Order (N): " << to_string(order) << endl;
+	auto timeStart = high_resolution_clock::now();
+	tree = BplusTree(order);
 	tree.storage = storage;
 	int dataCount = 0;
 	for (int i = 0; i < storage->blockManager.getBlockCount(); i++) {
