@@ -47,7 +47,7 @@ int main()
 
 	free(storage);
 
-	
+	std::cout << endl << endl << "================== 500MB STORAGE ==================" << endl;
 	storage = new Storage(500, 100 * (1 << ENUM_STORAGE_SCALE_MEGABYTE),true);
 	tree = NULL;
 	parseData(0);
