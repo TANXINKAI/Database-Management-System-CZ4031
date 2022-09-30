@@ -73,8 +73,8 @@ public:
 			MAX_KEYS++;
 		}while(iterVal <= limit);
 
-		//Loop exited, hence limit exceeded. Deduct 1 from MAX_KEYS
-		MAX_KEYS--;
+		//Loop exited, hence limit exceeded. Deduct 2 from MAX_KEYS
+		MAX_KEYS-=2;
 		return MAX_KEYS;
 	}
 };
