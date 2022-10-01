@@ -404,7 +404,7 @@ void BplusTree::search(int x)
 		std::cout << to_string(nodesAccessed) << " nodes accessed during search for key '"<< to_string(x) << "'" << endl;		
 		std::cout << to_string(blocksAccessedList.size()) << " blocks accessed during search for key '" << to_string(x) << "'" << endl;
 		
-		for (int i = 0; i < (nodesAccessed > 5 ? 5 : nodesAccessed); i++)
+		for (int i = 0; i < (contents.size() > 5 ? 5 : contents.size()); i++)
 		{
 			std::cout << "Node " << to_string(i + 1) << " keys: " << contents[i] << endl;
 		}
