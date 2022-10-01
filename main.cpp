@@ -100,8 +100,11 @@ void buildIndex() {
 
 void experiment1() {
 	double sizeMB = ((double)storage->getUsedStorageSize() / (double)(1 << ENUM_STORAGE_SCALE_MEGABYTE));
+	Node* root = tree.getRoot();
+	double sizeMBTree = ((double)tree.count_memory(root) / (double)(1 << ENUM_STORAGE_SCALE_MEGABYTE));
 	std::cout << endl << "(Experiment 1)" << endl << "Blocks Created: " << to_string(storage->blockManager.getBlockCount())
-		<< "\nDatabase size: " << to_string(sizeMB) << " MB\n\n";
+		<< "\nStorage size: " << to_string(sizeMB) << " MB" << "\nMemory Used By B+ Tree: " << to_string(sizeMBTree) << " MB"
+		<< "\nTotal database size: " << to_string(sizeMBTree+sizeMB) << "MB\n\n";
 }
 
 void experiment2() {
@@ -109,7 +112,6 @@ void experiment2() {
 	double sizeMB = ((double)tree.count_memory(root) / (double)(1 << ENUM_STORAGE_SCALE_MEGABYTE));
 	std::cout << endl << "(Experiment 2)" << endl << "Tree Parameter n: " << to_string(tree.getTreeOrder())
 		<< "\nNumber of Nodes in Tree: " << to_string(tree.count_nodes(root))
-		<< "\nMem in Tree (testing): " << to_string(sizeMB) << " MB"
 		<< "\nTree Height: " << to_string(tree.getHeight()) << "\n\n";
 		
 	string rootNodeContent = "Root Node Keys: ";
@@ -246,9 +248,9 @@ void parseData(int limit) {
 	auto timeStart = high_resolution_clock::now();
 	int dataCount = 0;
 	fstream file;
-	file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
+	//file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
 	
-	// file.open("data.tsv", ios::in);
+	file.open("data.tsv", ios::in);
 	if (file.is_open()) {
 		string line;
 		bool firstLine = true;
