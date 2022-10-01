@@ -330,14 +330,11 @@ void BplusTree::search(int x)
 			nodesAccessed += 1;
 			string strKeys = "";
 			int *keys = curr->getKeys();
-			double rating = 0.0;
 
 			for (int i = 0; i < curr->size; i++)
 			{
-				rating += storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getRating();
 				strKeys.append(to_string(keys[i]) + " ");
 			}
-			strKeys.append("(Average rating: " + to_string(rating / curr->size) + ")");
 			contents.push_back(strKeys);
 			for (int i = 0; i < curr->size; i++)
 			{
@@ -358,10 +355,8 @@ void BplusTree::search(int x)
 		double rating = 0.0;
 		for (int i = 0; i < curr->size; i++)
 		{
-			rating += storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getRating();
 			strKeys.append(to_string(keys[i]) + " ");
 		}
-		strKeys.append("(Average rating: " + to_string(rating / curr->size) + ")");
 		contents.push_back(strKeys);
 		std::cout << to_string(nodesAccessed) << " nodes accessed during search for key '" << to_string(x) << "'" << endl;
 		for (int i = 0; i < (nodesAccessed > 5 ? 5 : nodesAccessed); i++)
