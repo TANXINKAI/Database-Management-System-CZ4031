@@ -420,7 +420,7 @@ void BplusTree::search(int x)
 			int blockNum = blocksAccessedList[i];
 			std::cout << "Block #" << to_string(blockNum) << " Data: " ;
 			for(int c = 0; c < storage->blockManager.getMovieInfoPerBlock();c++){
-				std::cout << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << ((c != storage->blockManager.getMovieInfoPerBlock() - 1) ? ", " : "");
+				std::cout << storage->getMovieInfoAt(blockNum, c).getTConst() << ((c != storage->blockManager.getMovieInfoPerBlock() - 1) ? ", " : "");
 			}
 			std::cout << endl;
 		}
