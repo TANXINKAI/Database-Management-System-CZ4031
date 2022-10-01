@@ -343,7 +343,7 @@ void BplusTree::search(int x)
 			{
 				if(keys[i] >= x)
 				{
-					curr=(i-1 >=0 ? curr->ptr[i-1] : curr->ptr[i]); //Found node
+					curr=curr->ptr[i]; //Found node
 					nodesAccessed += 1;
 					found = true;
 					break;
