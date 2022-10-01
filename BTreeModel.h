@@ -340,10 +340,11 @@ void BplusTree::search(int x)
 			contents.push_back(strKeys);
 
 			for(int i=0;i<curr->size;i++) //Actual search loop
-			{
-				if(keys[i] >= x)
+			{  
+				if(x <= keys[i])
 				{
-					curr=(i-1 >=0 ? curr->ptr[i-1] : curr->ptr[i]); //Found node
+					//changed code 
+					curr = curr->ptr[i]; //Found node
 					nodesAccessed += 1;
 					found = true;
 					break;
@@ -440,7 +441,8 @@ void BplusTree::rangequery(int lb, int hb)
 			{
 				if(keys[i] >= lb)
 				{
-					curr=(i-1 >=0 ? curr->ptr[i-1] : curr->ptr[i]); //Found lower bound node
+					// changed 
+					curr = curr->ptr[i]; //Found node
 					nodesAccessed += 1;
 					foundLower = true;
 					break;
