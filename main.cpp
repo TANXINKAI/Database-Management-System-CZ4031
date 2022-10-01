@@ -264,7 +264,7 @@ void parseData(int limit) {
 	fstream file;
 	// file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
 	
-	file.open("data.tsv", ios::in);
+	file.open("/Users/sidhaarth/Desktop/Project 1/data.tsv", ios::in);
 	if (file.is_open()) {
 		string line;
 		bool firstLine = true;
