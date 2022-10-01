@@ -76,7 +76,7 @@ void buildIndex() {
 	tree.storage = storage;
 	int dataCount = 0;
 	for (int i = 0; i < storage->blockManager.getBlockCount(); i++) {
-		for (int j = 0; j < tree.getTreeOrder() + 1; j++) {
+		for (int j = 0; j < storage->blockManager.getMovieInfoPerBlock(); j++) {
 			MovieInfo mi;
 			try {
 				mi = storage->getMovieInfoAt(i, j);
@@ -94,7 +94,8 @@ void buildIndex() {
 		}
 	}
 	auto timeEnd = high_resolution_clock::now();
-	std::cout << "B+ tree build completed in " << to_string(duration_cast<milliseconds>(timeEnd - timeStart).count()) << " milliseconds" << endl << endl;
+	std::cout << "B+ tree build completed in " << to_string(duration_cast<milliseconds>(timeEnd - timeStart).count()) << " milliseconds. "
+	<< to_string(dataCount) << " records indexed." << endl << endl;
 }
 
 void experiment1() {
@@ -138,25 +139,41 @@ void experiment4() {
 }
 
 void experiment5() {
-	std::cout << endl << "(Experiment 5)" << endl;
-	tree.remove(1000);
 	Node* root = tree.getRoot();
-	double sizeMB = ((double)tree.count_memory(root) / (double)(1 << ENUM_STORAGE_SCALE_MEGABYTE));
-	std::cout << "Number of Nodes in Tree: " << to_string(tree.count_nodes(root))
-		<< "\nMem in Tree (testing): " << to_string(sizeMB) << " MB"
-		<< "\nTree Height: " << to_string(tree.getHeight()) << endl;
-	string rootNodeContent = "Root Node Keys: ";
-	int* rootKeys = root->getKeys();
-	for (int i = 0; i < root->getSize(); i++) {
-		rootNodeContent = rootNodeContent.append(to_string(rootKeys[i]) + " ");
-	}
-	Node* firstChild = root->getPointers()[0];
-	string firstChildContent = "First Child Keys: ";
-	int* firstChildKeys = firstChild->getKeys();
-	for (int i = 0; i < firstChild->getSize(); i++) {
-		firstChildContent = firstChildContent.append(to_string(firstChildKeys[i]) + (verbose ? "(" + to_string(firstChild->getBlocks()[i]) + "," + to_string(firstChild->getOffsets()[i]) + ") " : " "));
-	}
-	std::cout << rootNodeContent << endl << firstChildContent << "\n\n";
+
+	std::cout << endl << "(Experiment 5)" << endl;
+	int keys_deleted = 0;
+	int tree_nodes = tree.count_nodes(root);
+    int original_node_count = tree.count_nodes(root);
+	std::cout << "\nNumber of Nodes in Original Tree: " << to_string(tree.count_nodes(root)) <<endl;
+	while(tree.remove(1000) != -1){
+
+		if(tree_nodes != tree.count_nodes(root)){
+			keys_deleted += 1;
+		}
+
+		// std::cout << "\nNumber of Nodes in Tree: " << to_string(tree.count_nodes(root))
+		// << "\nTree Height: " << to_string(tree.getHeight()) << "\n\n";
+
+	};
+    string rootNodeContent = "Root Node Keys: ";
+    int* rootKeys = root->getKeys();
+    for (int i = 0; i < root->getSize(); i++) {
+        rootNodeContent = rootNodeContent.append(to_string(rootKeys[i]) + " ");
+    }
+    Node* firstChild = root->getPointers()[0];
+    string firstChildContent = "First Child Keys: ";
+    int* firstChildKeys = firstChild->getKeys();
+    for (int i = 0; i < firstChild->getSize(); i++) {
+        firstChildContent = firstChildContent.append(to_string(firstChildKeys[i]) + "(" + to_string(firstChild->getBlocks()[i]) + "," + to_string(firstChild->getOffsets()[i]) + ") ");
+    }
+
+    std::cout << "\nNumber of Nodes in Final Tree: " << to_string(tree.count_nodes(root));
+	std::cout << "\nNumber of keys deleted: " << keys_deleted;
+    std::cout << "\nNumber of Nodes deleted or merged: " << to_string(original_node_count - tree.count_nodes(root));
+	std::cout << "\nHeight of Final Tree: " << to_string(tree.getHeight()) <<endl;
+	std::cout << rootNodeContent << endl << firstChildContent << "\n";
+	// tree.remove(33858);
 }
 
 void testTree() {
@@ -180,6 +197,30 @@ void testTree() {
 	MovieInfo mi4(tconst,0.0,40);
 	storage->insertMovieInfo(mi4);
 
+	MovieInfo mi5(tconst,0.0,45);
+	storage->insertMovieInfo(mi5);
+
+	MovieInfo mi6(tconst,0.0,45);
+	storage->insertMovieInfo(mi6);
+
+	MovieInfo mi7(tconst,0.0,40);
+	storage->insertMovieInfo(mi7);
+
+	MovieInfo mi8(tconst,0.0,40);
+	storage->insertMovieInfo(mi8);
+
+	MovieInfo mi9(tconst,0.0,40);
+	storage->insertMovieInfo(mi9);
+
+	MovieInfo mi10(tconst,0.0,40);
+	storage->insertMovieInfo(mi10);
+
+	MovieInfo mi11(tconst,0.0,165);
+	//storage->insertMovieInfo(mi11);
+
+	MovieInfo mi12(tconst,0.0,165);
+	//storage->insertMovieInfo(mi12);
+
 	for (int i = 0; i < storage->blockManager.getBlockCount(); i++) {
 		for (int j = 0; j < storage->blockManager.getMovieInfoPerBlock(); j++) {
 			MovieInfo mi;
@@ -198,13 +239,13 @@ void testTree() {
 	std::cout << endl << endl;
 	node.display(node.getRoot());
 	std::cout << endl << endl;
+
 	int counts;
 	counts = node.count_nodes(node.getRoot());
 	std::cout << "Number of Nodes: " << to_string(counts) << "\n";
 
 	node.search(15);
 	node.remove(15);
-
 }
 
 void sampleRetrieve() {
@@ -271,7 +312,6 @@ void parseData(int limit) {
 		if(dataCount < 50000 && verbose)
 			std::cout << to_string(dataCount) << " records inserted." << endl;
 		std::cout << "Data insertion of " << to_string(dataCount) << " records completed in " << to_string(duration_cast<milliseconds>(timeEnd - timeStart).count()) << " milliseconds" << endl << endl;
-
 	}
 	else {
 		throw runtime_error("Unable to open file for reading");
