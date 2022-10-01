@@ -415,6 +415,16 @@ void BplusTree::search(int x)
 		}else{
 			std::cout << " Not found\n";
 		}
+
+		for(int i=0;i<(blocksAccessedList.size() > 5 ? 5 : blocksAccessedList.size());i++){
+			int blockNum = blocksAccessedList[i];
+			std::cout << "Block #" << to_string(blockNum) << " Data: " ;
+			for(int c = 0; c < storage->blockManager.getMovieInfoPerBlock();c++){
+				std::cout << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << ((c != storage->blockManager.getMovieInfoPerBlock() - 1) ? ", " : "");
+			}
+			std::cout << endl;
+		}
+
 	}
 
 	
