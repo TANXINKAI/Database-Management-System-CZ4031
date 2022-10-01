@@ -24,6 +24,9 @@ public:
 	void ctor(size_t blockSize, size_t storageSize, bool ignoreOrphanedBytes);
 	size_t getUsedStorageSize();
 	double getStorageSize(ENUM_STORAGE_SCALE type);
+	size_t getBlockSize(){
+		return blockSize;
+	}
 
 	unsigned char * insertMovieInfo(MovieInfo mi);
 	MovieInfo getMovieInfoAt(int block, int offset);

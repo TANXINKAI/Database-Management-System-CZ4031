@@ -14,8 +14,12 @@ Storage::Storage(size_t blockSize, size_t storageSize, bool ignoreOrphanedBytes)
 }
 
 void Storage::ctor(size_t blockSize, size_t storageSize, bool ignoreOrphanedBytes) {
-	if (!ignoreOrphanedBytes && storageSize % blockSize != 0)
-		throw std::invalid_argument("Storage size is not a multiple of blocksize (orphaned bytes).\nUse overload Storage(size_t,size_t,bool) to ignore");
+	if(storageSize % blockSize != 0){
+		if (!ignoreOrphanedBytes)
+			throw std::invalid_argument("Storage size is not a multiple of blocksize (orphaned bytes).\nUse overload Storage(size_t,size_t,bool) to ignore");
+		else
+			std::cout << "WARNING: Storage size is not a multiple of blocksize.\n";
+	}
 	this->blockSize = blockSize;
 	this->storageSize = storageSize;
 	this->blockManager = BlockManager(this->verbose, blockSize);
@@ -91,11 +95,10 @@ unsigned char* Storage::insertMovieInfo(MovieInfo mi) {
 			availableSpace = nullptr;
 	}
 	//No available space available (No existing blocks with allowance for new record)
-	if (availableSpace == nullptr)
+	if (availableSpace == nullptr){
 		availableSpace = (unsigned char*)this->createBlock();
-
-
-	this->blockManager.parse(&this->blockManager, availableSpace, this->blockSize);
+		this->blockManager.parse(&this->blockManager, availableSpace, this->blockSize);
+	}
 
 	unsigned char* addressWritten = this->blockManager.insertMovieInfoAt(mi);
 

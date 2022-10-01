@@ -47,6 +47,36 @@ public:
 	{
 		return this->ptr;
 	}
+	int getMemSize(){
+		int retVal = 0;
+		retVal += sizeof(IS_LEAFNODE);
+		retVal += sizeof(key) * MAX_KEYS;
+		retVal += sizeof(size);
+		retVal += sizeof(ptr) * (MAX_KEYS + 1);
+		retVal += sizeof(addressBlock) * MAX_KEYS;
+		retVal += sizeof(addressOffset) * MAX_KEYS;
+		return retVal;
+	}
+	int getOrderWorstCase(int limit){
+		int base = 0;
+		base += sizeof(bool);
+		base += sizeof(int);
+
+		int iterVal = base;
+		do{
+			iterVal = base;
+
+			iterVal += sizeof(int) * MAX_KEYS;
+			iterVal += sizeof(Node*) * (MAX_KEYS + 1);
+			iterVal += sizeof(int) * MAX_KEYS;
+			iterVal += sizeof(int) * MAX_KEYS;
+			MAX_KEYS++;
+		}while(iterVal <= limit);
+
+		//Loop exited, hence limit exceeded. Deduct 2 from MAX_KEYS
+		MAX_KEYS-=2;
+		return MAX_KEYS;
+	}
 };
 class BplusTree
 {
@@ -202,16 +232,16 @@ void BplusTree::insert(int x, int block, int offset)
 			if (curr->ptr[curr->size] != nullptr)
 				{
 					newLeaf->ptr[newLeaf->size] = curr->ptr[curr->size];
-					
+
 					// Node **nextptr = (Node **)malloc(sizeof(Node) * (MAX_KEYS + 2));
 					// nextptr[0] = curr->ptr[curr->size];
 					// newLeaf->ptr[newLeaf->size] = nextptr[nextptr[0]->size];
 
 					// free(nextptr);
 				}
-			
-				
- 
+
+
+
 			curr->size = (MAX_KEYS + 1) / 2;
 			curr->ptr[curr->size] = newLeaf;
 
@@ -316,28 +346,23 @@ void BplusTree::search(int x)
 		{
 			for (int i = 0; i < curr->size; i++)
 			{
-				std::cout << "key is : " << curr->key[i] << "\t curr->size: " << curr->getSize() << endl;
 				if (curr->key[i] == x)
 				{
-					std::cout << "Found key " << to_string(x) << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << "\n";
-					std::cout << "i: " << i << endl;
-					if (!keyFound)
-					{
-						keyFound = true;
+					keyFound = true;
+					if(storage->verbose){
+						std::cout << "Found key " << to_string(x) << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << "\n";
+						std::cout << "i: " << i << endl;
 					}
 				}
 			}
 			//end of leaf nodes.
 			if (!curr->ptr[curr->size])
 			{
-				std::cout << "terminated by null" << endl;
-				free(curr);
-				return;
+				break;
 			}
 			curr = curr->ptr[curr->size];
-			std::cout << "new curr->key[curr->size]: " << curr->key[curr->size] << endl;
 		}
-		
+
 		if (!keyFound)
 				std::cout << "Could not find key " << to_string(x) << endl;
 		return;
@@ -345,7 +370,6 @@ void BplusTree::search(int x)
 }
 
 // Ranged Search operation
-// TODO: Fix this range query something is wrong, it shouldn't be found / not found. Needs to return all found nodes or similar
 void BplusTree::rangequery(int lb, int hb)
 {
 	vector<string> contents;
@@ -378,7 +402,6 @@ void BplusTree::rangequery(int lb, int hb)
 					blocksAccessedList.push_back(curr->addressBlock[i]);
 				strKeys.append(to_string(keys[i]) + " ");
 			}
-			strKeys.append("(Average rating: " + to_string(rating / curr->size) + ")");
 			contents.push_back(strKeys);
 			for (int i = 0; i < curr->size; i++)
 			{
@@ -397,6 +420,7 @@ void BplusTree::rangequery(int lb, int hb)
 		string strKeys = "";
 		int *keys = curr->getKeys();
 		double rating = 0.0;
+		int count = 0;
 		for (int i = 0; i < curr->size; i++)
 		{
 			rating += storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getRating();
@@ -411,7 +435,6 @@ void BplusTree::rangequery(int lb, int hb)
 				blocksAccessedList.push_back(curr->addressBlock[i]);
 			strKeys.append(to_string(keys[i]) + " ");
 		}
-		strKeys.append("(Average rating: " + to_string(rating / curr->size) + ")");
 		contents.push_back(strKeys);
 		std::cout << to_string(nodesAccessed) << " nodes accessed during search for key in range ('" << to_string(lb) << "','" << to_string(hb) << "')" << endl;
 		std::cout << to_string(blocksAccessedList.size()) << " blocks accessed during search for key in range ('" << to_string(lb) << "','" << to_string(hb) << "')" << endl;
@@ -423,28 +446,20 @@ void BplusTree::rangequery(int lb, int hb)
 
 		// loop for values in range.
 		bool keyFound = false;
-		
+
 		if (curr == nullptr)
 			return;
-		
+
 		// take leftmost pointer to obtain leafnode.
 		while (curr->IS_LEAFNODE == false)
 		{
 			int *keys = curr->getKeys();
-			std::cout << keys[0] << endl;
 			curr = curr->ptr[0];
 		}
 		// std::cout << "leafNode display" << endl;
-
-
-		if (curr->key)
-		{
-			std::cout << curr->key[0] << "is null" << endl;
-		}
-
+		double totalRating = 0.0;
 		while (curr->key[0] <= hb)
 		{
-			std::cout << curr->size << endl;
 			for (int i = 0; i < curr->size; i++)
 			{
 				if (curr->key[i] < lb || curr->key[i] > hb)
@@ -454,28 +469,27 @@ void BplusTree::rangequery(int lb, int hb)
 				}
 				else
 				{
-					if (!keyFound)
-					{
-						keyFound = true;
-					}
-					std::cout << "Found key " << curr->key[i] << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << "\n";
+					keyFound = true;
+
+					if (storage->verbose)
+						std::cout << "Found key " << curr->key[i] << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst()
+						<< ", rating: " << to_string(storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getRating()) << endl;
+					totalRating += storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getRating();
+					count++;
 				}
 			}
 			if (!curr->ptr[curr->size])
-			{
-				std::cout << "terminated by null" << endl;
-				free(curr);
-				return;
-			}
+				break;
+
 			curr = curr->ptr[curr->size];
-			std::cout << endl;
 		}
 
-		// std::cout << "new curr->key[0]: " << curr->key[0] << endl;
-		// std::cout << "new curr->key[curr->size - 1]: " << curr->key[curr->size - 1] << endl;
-
-		if (!keyFound)
+		if(keyFound){
+			std::cout << "Found " << to_string(count) << " records matching criteria with a total rating of " << to_string(totalRating) << endl;
+			std::cout << "Average Rating: " << to_string(totalRating / count) << endl;
+		}else{
 			std::cout << " Not found\n";
+		}
 	}
 }
 void BplusTree::insertInternal(int x, int block, int offset, Node *curr, Node *child) // insert a new internal node in B+ tree
@@ -602,6 +616,7 @@ Node *BplusTree::findParent(Node *curr, Node *child)
 
 void BplusTree::remove(int x)
 {
+	int numDelete = 0;
 	if (root == nullptr)
 	{
 		std::cout << "Tree empty\n";
@@ -725,6 +740,7 @@ void BplusTree::remove(int x)
 			leftNode->size += curr->size;
 			leftNode->ptr[leftNode->size] = curr->ptr[curr->size];
 			removeInternal(parent->key[leftSibling], parent, curr);
+			numDelete++;
 			delete[] curr->key;
 			delete[] curr->ptr;
 			delete curr;
@@ -739,13 +755,18 @@ void BplusTree::remove(int x)
 			curr->ptr[curr->size] = nullptr;
 			curr->size += rightNode->size;
 			curr->ptr[curr->size] = rightNode->ptr[rightNode->size];
-			std::cout << "Merging two leaf nodes\n";
+			if(storage->verbose)
+				std::cout << "Merging two leaf nodes\n";
+
 			removeInternal(parent->key[rightSibling - 1], parent, rightNode);
+			numDelete++;
 			delete[] rightNode->key;
 			delete[] rightNode->ptr;
 			delete rightNode;
 		}
 	}
+
+	std::cout << to_string(numDelete) << " nodes deleted in the process of deleting key " << to_string(x) << endl;
 }
 void BplusTree::removeInternal(int x, Node *curr, Node *child)
 {
@@ -900,7 +921,7 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 
 int BplusTree::count_memory(Node *curr)
 {
-	int retVal = 1; // As long as we enter this method, count as 1 as we are iterating a node to be in this method (this is necessary to account for internal nodes).
+	int retVal = curr->getMemSize(); // As long as we enter this method, count as 1 as we are iterating a node to be in this method (this is necessary to account for internal nodes).
 
 	if (curr == nullptr) // Edge case
 		return 0;
@@ -910,7 +931,6 @@ int BplusTree::count_memory(Node *curr)
 		// If it is not a leaf node, we recurse through all available child nodes
 		for (int i = 0; i < curr->size + 1; i++)
 		{
-			retVal = sizeof(curr);
 			retVal += count_memory(curr->ptr[i]);
 		}
 	}

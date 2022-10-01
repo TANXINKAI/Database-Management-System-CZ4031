@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <cstring>
+#include "math.h"
 
 struct MovieInfo
 {
@@ -10,7 +11,7 @@ public:
 	MovieInfo(unsigned char _tconst[], double _rating, int _votes) {
 		for (int i = 0; i < 10; i++)
 			tconst[i] = _tconst[i];
-		rating = (unsigned int)(_rating * 10);
+		rating = (unsigned int)ceil(_rating * 10.0);
 		votes = _votes;
 	}
 
@@ -40,12 +41,13 @@ public:
 
 	void deserialize(MovieInfo* mi, unsigned char* data) {
 		memcpy(&mi->tconst, data, 10);
+		mi->tconst[10] = '\0';
 		memcpy(&mi->rating, data + 10, 1);
 		memcpy(&mi->votes, data + 11, 4);
 	}
 
 private:
-	unsigned char tconst[10];
+	unsigned char tconst[11]; //Actual size when stored is still 10 bytes when stored(serialization). Added 1 more byte to allow for NULL terminator when deserializing
 	unsigned char rating;
 	int votes;
 };
