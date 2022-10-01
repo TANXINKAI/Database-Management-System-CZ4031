@@ -316,6 +316,7 @@ void BplusTree::insert(int x, int block, int offset)
 // Search operation
 void BplusTree::search(int x)
 {
+	vector<int> blocksAccessedList;
 	vector<string> contents;
 	int nodesAccessed = 1;
 	bool keyFound = false;
@@ -326,70 +327,98 @@ void BplusTree::search(int x)
 	else
 	{
 		Node *curr = root;
+		int count  = 0;
 		while (curr->IS_LEAFNODE == false)
 		{
-			nodesAccessed += 1;
+			bool found = false;
 			string strKeys = "";
 			int *keys = curr->getKeys();
-
 			for (int i = 0; i < curr->size; i++)
 			{
 				strKeys.append(to_string(keys[i]) + " ");
 			}
+			
 			contents.push_back(strKeys);
-			for (int i = 0; i < curr->size; i++)
+
+			for(int i=0;i<curr->size;i++) //Actual search loop
 			{
-				if (x <= curr->key[i])
+				if(keys[i] >= x)
 				{
-					curr = curr->ptr[i];
-					break;
-				}
-				if (i == curr->size - 1)
-				{
-					curr = curr->ptr[i + 1];
+					curr=(i-1 >=0 ? curr->ptr[i-1] : curr->ptr[i]); //Found node
+					nodesAccessed += 1;
+					found = true;
 					break;
 				}
 			}
+
+			if(!found){
+				curr=curr->ptr[curr->size]; //Use right internal node since lower bound isn't found
+				nodesAccessed += 1;
+			}
+
 		}
 		string strKeys = "";
 		int *keys = curr->getKeys();
-		double rating = 0.0;
-		for (int i = 0; i < curr->size; i++)
-		{
-			strKeys.append(to_string(keys[i]) + " ");
-		}
-		contents.push_back(strKeys);
-		std::cout << to_string(nodesAccessed) << " nodes accessed during search for key '" << to_string(x) << "'" << endl;
-		for (int i = 0; i < (nodesAccessed > 5 ? 5 : nodesAccessed); i++)
-		{
-			std::cout << "Node " << to_string(i + 1) << " keys: " << contents[i] << endl;
-		}
 
-		while (curr->key[0] <= x)
+		double rating = 0.0;
+		bool upperbound = true;
+
+		while (curr->key[0] <= x && upperbound)
 		{
 			for (int i = 0; i < curr->size; i++)
 			{
+				if(curr->key[i] > x){
+					upperbound = false;
+					break;
+				}
 				if (curr->key[i] == x)
 				{
+					count += 1;
 					keyFound = true;
+					rating += storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getRating();
+					strKeys.append(to_string(keys[i]) + " ");
 					if(storage->verbose){
 						std::cout << "Found key " << to_string(x) << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << "\n";
 						std::cout << "i: " << i << endl;
 					}
+					bool unique = true;
+					for (int j = 0; j < blocksAccessedList.size(); j++) //Check if block accessed is unique, if it is, add it to accessed list
+						if (blocksAccessedList[j] == curr->addressBlock[i])
+						{
+							unique = false;
+							break;
+						}
+					if (unique)
+						blocksAccessedList.push_back(curr->addressBlock[i]);
 				}
+				
 			}
 			//end of leaf nodes.
 			if (!curr->ptr[curr->size])
 			{
 				break;
 			}
+			nodesAccessed += 1;
 			curr = curr->ptr[curr->size];
 		}
 
-		if (!keyFound)
-				std::cout << "Could not find key " << to_string(x) << endl;
-		return;
+		std::cout << to_string(nodesAccessed) << " nodes accessed during search for key '"<< to_string(x) << "'" << endl;		
+		std::cout << to_string(blocksAccessedList.size()) << " blocks accessed during search for key '" << to_string(x) << "'" << endl;
+		
+		for (int i = 0; i < (nodesAccessed > 5 ? 5 : nodesAccessed); i++)
+		{
+			std::cout << "Node " << to_string(i + 1) << " keys: " << contents[i] << endl;
+		}
+
+		if(count > 0){
+			std::cout << "Found " << to_string(count) << " records matching criteria with a total rating of " << to_string(rating) << endl;
+			std::cout << "Average Rating: " << to_string(rating / count) << endl;
+		}else{
+			std::cout << " Not found\n";
+		}
 	}
+
+	
 }
 
 // Ranged Search operation
