@@ -305,9 +305,9 @@ void BplusTree::insert(int x, int block, int offset)
 			{
 				insertInternal(newLeaf->key[0], newLeaf->addressBlock[0], newLeaf->addressOffset[0], parent, newLeaf); // create a new internal node in B+ tree
 			}
-			// free(tempNode);
-			// free(tempNodeBlock);
-			// free(tempNodeOffset);
+			//free(tempNode);
+			//free(tempNodeBlock);
+			//free(tempNodeOffset);
 		}
 	}
 }
@@ -428,7 +428,7 @@ void BplusTree::rangequery(int lb, int hb)
 			{
 				if(keys[i] >= lb)
 				{
-					curr=curr->ptr[i]; //Found lower bound node
+					curr=(i-1 >=0 ? curr->ptr[i-1] : curr->ptr[i]); //Found lower bound node
 					nodesAccessed += 1;
 					foundLower = true;
 					break;
@@ -562,10 +562,10 @@ void BplusTree::insertInternal(int x, int block, int offset, Node *curr, Node *c
 			}
 			newInternal->ptr[i] = tempPtr[j];
 		}
-		// free(tempKey);
-		// free(tempBlock);
-		// free(tempOffset);
-		// free(tempPtr);
+		//free(tempKey);
+		//free(tempBlock);
+		//free(tempOffset);
+		//free(tempPtr);
 		if (curr == root) // Need somewhere to Update the Height and Number of Nodes in B+ tree
 		{
 			Node *newRoot = new Node;
