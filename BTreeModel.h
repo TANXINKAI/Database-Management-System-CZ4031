@@ -106,8 +106,7 @@ public:
 	void leveldisplay(Node *, int, vector<string> *);
 	void leafNodedisplay(Node *);
 	void leafNodedisplaylimited(Node *, int);
-    void rebuild(Node *, int, int);
-
+	void rebuild(Node *, int, int);
 	Storage *storage = nullptr;
 };
 Node::Node()
@@ -316,7 +315,7 @@ void BplusTree::insert(int x, int block, int offset)
 // Search operation
 void BplusTree::search(int x)
 {
-	// vector<int> blocksAccessedList;
+	vector<int> blocksAccessedList;
 	vector<string> contents;
 	int nodesAccessed = 1;
 	bool keyFound = false;
@@ -341,11 +340,10 @@ void BplusTree::search(int x)
 			contents.push_back(strKeys);
 
 			for(int i=0;i<curr->size;i++) //Actual search loop
-			{  
-				if(x <= keys[i])
+			{
+				if(keys[i] >= x)
 				{
-					//changed code 
-					curr = curr->ptr[i]; //Found node
+					curr=curr->ptr[i]; //Found node
 					nodesAccessed += 1;
 					found = true;
 					break;
@@ -360,9 +358,10 @@ void BplusTree::search(int x)
 		}
 		string strKeys = "";
 		int *keys = curr->getKeys();
-		double rating = 0.0;
 
+		double rating = 0.0;
 		bool upperbound = true;
+
 		while (curr->key[0] <= x && upperbound)
 		{
 			for (int i = 0; i < curr->size; i++)
@@ -381,7 +380,17 @@ void BplusTree::search(int x)
 						std::cout << "Found key " << to_string(x) << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << "\n";
 						std::cout << "i: " << i << endl;
 					}
+					bool unique = true;
+					for (int j = 0; j < blocksAccessedList.size(); j++) //Check if block accessed is unique, if it is, add it to accessed list
+						if (blocksAccessedList[j] == curr->addressBlock[i])
+						{
+							unique = false;
+							break;
+						}
+					if (unique)
+						blocksAccessedList.push_back(curr->addressBlock[i]);
 				}
+				
 			}
 			//end of leaf nodes.
 			if (!curr->ptr[curr->size])
@@ -393,8 +402,9 @@ void BplusTree::search(int x)
 		}
 
 		std::cout << to_string(nodesAccessed) << " nodes accessed during search for key '"<< to_string(x) << "'" << endl;		
-
-		for (int i = 0; i < (nodesAccessed > 5 ? 5 : nodesAccessed); i++)
+		std::cout << to_string(blocksAccessedList.size()) << " blocks accessed during search for key '" << to_string(x) << "'" << endl;
+		
+		for (int i = 0; i < (contents.size() > 5 ? 5 : contents.size()); i++)
 		{
 			std::cout << "Node " << to_string(i + 1) << " keys: " << contents[i] << endl;
 		}
@@ -442,8 +452,7 @@ void BplusTree::rangequery(int lb, int hb)
 			{
 				if(keys[i] >= lb)
 				{
-					// changed 
-					curr = curr->ptr[i]; //Found node
+					curr=(i-1 >=0 ? curr->ptr[i-1] : curr->ptr[i]); //Found lower bound node
 					nodesAccessed += 1;
 					foundLower = true;
 					break;
