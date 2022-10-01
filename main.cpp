@@ -144,22 +144,33 @@ void experiment5() {
 	std::cout << endl << "(Experiment 5)" << endl;
 	tree.remove(1000);
 	Node* root = tree.getRoot();
-	double sizeMB = ((double)tree.count_memory(root) / (double)(1 << ENUM_STORAGE_SCALE_MEGABYTE));
-	std::cout << "Number of Nodes in Tree: " << to_string(tree.count_nodes(root))
-		<< "\nMem in Tree (testing): " << to_string(sizeMB) << " MB"
-		<< "\nTree Height: " << to_string(tree.getHeight()) << endl;
-	string rootNodeContent = "Root Node Keys: ";
-	int* rootKeys = root->getKeys();
-	for (int i = 0; i < root->getSize(); i++) {
-		rootNodeContent = rootNodeContent.append(to_string(rootKeys[i]) + " ");
-	}
-	Node* firstChild = root->getPointers()[0];
-	string firstChildContent = "First Child Keys: ";
-	int* firstChildKeys = firstChild->getKeys();
-	for (int i = 0; i < firstChild->getSize(); i++) {
-		firstChildContent = firstChildContent.append(to_string(firstChildKeys[i]) + (verbose ? "(" + to_string(firstChild->getBlocks()[i]) + "," + to_string(firstChild->getOffsets()[i]) + ") " : " "));
-	}
-	std::cout << rootNodeContent << endl << firstChildContent << "\n\n";
+
+	int keys_deleted = 0;
+	int tree_nodes = tree.count_nodes(root);
+    int original_node_count = tree.count_nodes(root);
+	std::cout << "\nNumber of Nodes in Original Tree: " << to_string(tree.count_nodes(root)) <<endl;
+	
+	while(tree.remove(1000) != -1);
+
+
+    string rootNodeContent = "Root Node Keys: ";
+    int* rootKeys = root->getKeys();
+    for (int i = 0; i < root->getSize(); i++) {
+        rootNodeContent = rootNodeContent.append(to_string(rootKeys[i]) + " ");
+    }
+
+    Node* firstChild = root->getPointers()[0];
+    string firstChildContent = "First Child Keys: ";
+    int* firstChildKeys = firstChild->getKeys();
+    for (int i = 0; i < firstChild->getSize(); i++) {
+        firstChildContent = firstChildContent.append(to_string(firstChildKeys[i]) + " ");
+    }
+
+    std::cout << "\nNumber of Nodes in Final Tree: " << to_string(tree.count_nodes(root));
+    std::cout << "\nNumber of Nodes deleted or merged: " << to_string(original_node_count - tree.count_nodes(root));
+	std::cout << "\nHeight of Final Tree: " << to_string(tree.getHeight()) <<endl;
+	std::cout << rootNodeContent << endl << firstChildContent << "\n";
+
 }
 
 void testTree() {
@@ -248,9 +259,9 @@ void parseData(int limit) {
 	auto timeStart = high_resolution_clock::now();
 	int dataCount = 0;
 	fstream file;
-	//file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
+	file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
 	
-	file.open("data.tsv", ios::in);
+	// file.open("data.tsv", ios::in);
 	if (file.is_open()) {
 		string line;
 		bool firstLine = true;

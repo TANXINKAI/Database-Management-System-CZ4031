@@ -99,7 +99,7 @@ public:
 	void search(int);
 	void rangequery(int, int);
 	void insert(int, int, int);
-	void remove(int);
+	int remove(int);
 	int count_memory(Node *);
 	int count_nodes(Node *);
 	void display(Node *);
@@ -653,12 +653,13 @@ Node *BplusTree::findParent(Node *curr, Node *child)
 	return parent;
 }
 
-void BplusTree::remove(int x)
+int BplusTree::remove(int x)
 {
 	int numDelete = 0;
 	if (root == nullptr)
 	{
 		std::cout << "Tree empty\n";
+		return -1;
 	}
 	else
 	{
@@ -698,8 +699,8 @@ void BplusTree::remove(int x)
 		}
 		if (!found)
 		{
-			std::cout << "Not found\n";
-			return;
+			// std::cout << "Not found\n";
+			return -1;
 		}
 		for (int i = pos; i < curr->size; i++)
 		{
@@ -719,14 +720,16 @@ void BplusTree::remove(int x)
 				delete[] curr->ptr;
 				delete curr;
 				root = nullptr;
+				// return -1;
 			}
-			return;
+			return 1;
+			
 		}
 		curr->ptr[curr->size] = curr->ptr[curr->size + 1];
 		curr->ptr[curr->size + 1] = nullptr;
 		if (curr->size >= (MAX_KEYS + 1) / 2)
 		{
-			return;
+			return 1;
 		}
 		if (leftSibling >= 0)
 		{
@@ -745,7 +748,7 @@ void BplusTree::remove(int x)
 				leftNode->ptr[leftNode->size] = curr;
 				leftNode->ptr[leftNode->size + 1] = nullptr;
 				parent->key[leftSibling] = curr->key[0];
-				return;
+				return 1;
 			}
 		}
 		if (rightSibling <= parent->size)
@@ -765,7 +768,7 @@ void BplusTree::remove(int x)
 					rightNode->key[i] = rightNode->key[i + 1];
 				}
 				parent->key[rightSibling - 1] = rightNode->key[0];
-				return;
+				return 1;
 			}
 		}
 		if (leftSibling >= 0)
@@ -803,9 +806,11 @@ void BplusTree::remove(int x)
 			delete[] rightNode->ptr;
 			delete rightNode;
 		}
+		return 1;
 	}
 
 	std::cout << to_string(numDelete) << " nodes deleted in the process of deleting key " << to_string(x) << endl;
+	// return 1;
 }
 void BplusTree::removeInternal(int x, Node *curr, Node *child)
 {
