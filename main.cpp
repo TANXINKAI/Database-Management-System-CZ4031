@@ -94,7 +94,7 @@ void buildIndex() {
 		}
 	}
 	auto timeEnd = high_resolution_clock::now();
-	std::cout << "B+ tree build completed in " << to_string(duration_cast<milliseconds>(timeEnd - timeStart).count()) << " milliseconds. "
+	std::cout << "B+ tree build completed in " << to_string(duration_cast<milliseconds>(timeEnd - timeStart).count()) << " milliseconds. " 
 	<< to_string(dataCount) << " records indexed." << endl << endl;
 }
 
@@ -111,7 +111,7 @@ void experiment2() {
 		<< "\nNumber of Nodes in Tree: " << to_string(tree.count_nodes(root))
 		<< "\nMem in Tree (testing): " << to_string(sizeMB) << " MB"
 		<< "\nTree Height: " << to_string(tree.getHeight()) << "\n\n";
-
+		
 	string rootNodeContent = "Root Node Keys: ";
 	int* rootKeys = root->getKeys();
 	for (int i = 0; i < root->getSize(); i++) {
@@ -179,7 +179,7 @@ void experiment5() {
 void testTree() {
 	BplusTree node(3);
 	node.storage = storage;
-
+	
 	unsigned char tconst[10] = {'a','b','c','d','e','f','g','h','i','j'};
 	for(int c=0;c<21;c++){
 		MovieInfo mi(tconst,0.0,c*10+5);
@@ -196,7 +196,7 @@ void testTree() {
 
 	MovieInfo mi4(tconst,0.0,40);
 	storage->insertMovieInfo(mi4);
-
+	
 	MovieInfo mi5(tconst,0.0,45);
 	storage->insertMovieInfo(mi5);
 
@@ -208,7 +208,7 @@ void testTree() {
 
 	MovieInfo mi8(tconst,0.0,40);
 	storage->insertMovieInfo(mi8);
-
+	
 	MovieInfo mi9(tconst,0.0,40);
 	storage->insertMovieInfo(mi9);
 
@@ -262,8 +262,8 @@ void parseData(int limit) {
 	auto timeStart = high_resolution_clock::now();
 	int dataCount = 0;
 	fstream file;
-	//file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
-
+	// file.open("C:\\Users\\You\\Downloads\\data.tsv", ios::in);
+	
 	file.open("data.tsv", ios::in);
 	if (file.is_open()) {
 		string line;

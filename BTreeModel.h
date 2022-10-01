@@ -65,7 +65,7 @@ public:
 		int iterVal = base;
 		do{
 			iterVal = base;
-
+			
 			iterVal += sizeof(int) * MAX_KEYS;
 			iterVal += sizeof(Node*) * (MAX_KEYS + 1);
 			iterVal += sizeof(int) * MAX_KEYS;
@@ -260,16 +260,16 @@ void BplusTree::insert(int x, int block, int offset)
 			if (curr->ptr[curr->size] != nullptr)
 				{
 					newLeaf->ptr[newLeaf->size] = curr->ptr[curr->size];
-
+					
 					// Node **nextptr = (Node **)malloc(sizeof(Node) * (MAX_KEYS + 2));
 					// nextptr[0] = curr->ptr[curr->size];
 					// newLeaf->ptr[newLeaf->size] = nextptr[nextptr[0]->size];
 
 					// free(nextptr);
 				}
-
-
-
+			
+				
+ 
 			curr->size = (MAX_KEYS + 1) / 2;
 			curr->ptr[curr->size] = newLeaf;
 
@@ -316,7 +316,7 @@ void BplusTree::insert(int x, int block, int offset)
 // Search operation
 void BplusTree::search(int x)
 {
-	vector<int> blocksAccessedList;
+	// vector<int> blocksAccessedList;
 	vector<string> contents;
 	int nodesAccessed = 1;
 	bool keyFound = false;
@@ -341,10 +341,11 @@ void BplusTree::search(int x)
 			contents.push_back(strKeys);
 
 			for(int i=0;i<curr->size;i++) //Actual search loop
-			{
-				if(keys[i] >= x)
+			{  
+				if(x <= keys[i])
 				{
-					curr=(i-1 >=0 ? curr->ptr[i-1] : curr->ptr[i]); //Found node
+					//changed code 
+					curr = curr->ptr[i]; //Found node
 					nodesAccessed += 1;
 					found = true;
 					break;
@@ -359,10 +360,9 @@ void BplusTree::search(int x)
 		}
 		string strKeys = "";
 		int *keys = curr->getKeys();
-
 		double rating = 0.0;
-		bool upperbound = true;
 
+		bool upperbound = true;
 		while (curr->key[0] <= x && upperbound)
 		{
 			for (int i = 0; i < curr->size; i++)
@@ -381,17 +381,7 @@ void BplusTree::search(int x)
 						std::cout << "Found key " << to_string(x) << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() << "\n";
 						std::cout << "i: " << i << endl;
 					}
-					bool unique = true;
-					for (int j = 0; j < blocksAccessedList.size(); j++) //Check if block accessed is unique, if it is, add it to accessed list
-						if (blocksAccessedList[j] == curr->addressBlock[i])
-						{
-							unique = false;
-							break;
-						}
-					if (unique)
-						blocksAccessedList.push_back(curr->addressBlock[i]);
 				}
-				
 			}
 			//end of leaf nodes.
 			if (!curr->ptr[curr->size])
@@ -403,8 +393,7 @@ void BplusTree::search(int x)
 		}
 
 		std::cout << to_string(nodesAccessed) << " nodes accessed during search for key '"<< to_string(x) << "'" << endl;		
-		std::cout << to_string(blocksAccessedList.size()) << " blocks accessed during search for key '" << to_string(x) << "'" << endl;
-		
+
 		for (int i = 0; i < (nodesAccessed > 5 ? 5 : nodesAccessed); i++)
 		{
 			std::cout << "Node " << to_string(i + 1) << " keys: " << contents[i] << endl;
@@ -435,10 +424,10 @@ void BplusTree::rangequery(int lb, int hb)
 	{
 		Node *curr = root;
 		int count = 0;
-
+		
 		if (curr == nullptr)
 			return;
-
+		
 		// Seek for first node within our lower boundary
 		while (!curr->IS_LEAFNODE)
 		{
@@ -453,7 +442,8 @@ void BplusTree::rangequery(int lb, int hb)
 			{
 				if(keys[i] >= lb)
 				{
-					curr=(i-1 >=0 ? curr->ptr[i-1] : curr->ptr[i]); //Found lower bound node
+					// changed 
+					curr = curr->ptr[i]; //Found node
 					nodesAccessed += 1;
 					foundLower = true;
 					break;
@@ -465,7 +455,7 @@ void BplusTree::rangequery(int lb, int hb)
 				nodesAccessed += 1;
 			}
 		}
-
+		
 		//Traverse right of each node (starting from the node with our lower boundary)
 		double totalRating = 0.0;
 		bool exceededUpperBound = false;
@@ -477,7 +467,7 @@ void BplusTree::rangequery(int lb, int hb)
 				}
 				else if(curr->key[i] >= lb && curr->key[i] <=hb){
 					if (storage->verbose)
-						std::cout << "Found key " << curr->key[i] << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst()
+						std::cout << "Found key " << curr->key[i] << "\t tconst: " << storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getTConst() 
 						<< ", rating: " << to_string(storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getRating()) << endl;
 					totalRating += storage->getMovieInfoAt(curr->addressBlock[i], curr->addressOffset[i]).getRating();
 					count++;
@@ -877,6 +867,7 @@ int BplusTree::remove(int x)
 		return 1;
 	}
 }
+
 void BplusTree::removeInternal(int x, Node *curr, Node *child)
 {
 	if (curr == root)
