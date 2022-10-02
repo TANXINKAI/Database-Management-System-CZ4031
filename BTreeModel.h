@@ -461,7 +461,17 @@ void BplusTree::rangequery(int lb, int hb)
 			{
 				if(keys[i] >= lb)
 				{
-					curr= curr->ptr[i]; //Found lower bound node
+					if(curr->ptr[0] && curr->ptr[0]->ptr[0] && curr->ptr[0]->ptr[i]->IS_LEAFNODE){ //If the next node is a leaf node, we apply -1 offset for edge case detection
+						if(i-2>=0)
+							curr= curr->ptr[i-2];
+						else if(i-1>=0)
+						  curr = curr->ptr[i-1];
+						else
+							curr = curr->ptr[i];
+					}
+					else{
+						curr = curr->ptr[i];
+					}
 					nodesAccessed += 1;
 					foundLower = true;
 					break;
