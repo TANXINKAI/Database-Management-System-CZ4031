@@ -720,7 +720,7 @@ int BplusTree::remove(int x)
 		{
 			for (int i = 0; i < MAX_KEYS + 1; i++)
 			{
-				curr->ptr[i] = nullptr;
+				//curr->ptr[i] = nullptr;
 			}
 			if (curr->size == 0)
 			{
@@ -735,7 +735,7 @@ int BplusTree::remove(int x)
 			
 		}
 		curr->ptr[curr->size] = curr->ptr[curr->size + 1];
-		curr->ptr[curr->size + 1] = nullptr;
+		//curr->ptr[curr->size + 1] = nullptr;
 		if (curr->size >= (MAX_KEYS + 1) / 2)
 		{
 			return 1;
@@ -755,7 +755,7 @@ int BplusTree::remove(int x)
 				curr->key[0] = leftNode->key[leftNode->size - 1];
 				leftNode->size--;
 				leftNode->ptr[leftNode->size] = curr;
-				leftNode->ptr[leftNode->size + 1] = nullptr;
+				//leftNode->ptr[leftNode->size + 1] = nullptr;
 				parent->key[leftSibling] = curr->key[0];
 				return 1;
 			}
@@ -771,7 +771,7 @@ int BplusTree::remove(int x)
 				curr->key[curr->size - 1] = rightNode->key[0];
 				rightNode->size--;
 				rightNode->ptr[rightNode->size] = rightNode->ptr[rightNode->size + 1];
-				rightNode->ptr[rightNode->size + 1] = nullptr;
+				//rightNode->ptr[rightNode->size + 1] = nullptr;
 				for (int i = 0; i < rightNode->size; i++)
 				{
 					rightNode->key[i] = rightNode->key[i + 1];
@@ -787,7 +787,7 @@ int BplusTree::remove(int x)
 			{
 				leftNode->key[i] = curr->key[j];
 			}
-			leftNode->ptr[leftNode->size] = nullptr;
+			//leftNode->ptr[leftNode->size] = nullptr;
 			leftNode->size += curr->size;
 			leftNode->ptr[leftNode->size] = curr->ptr[curr->size];
 			removeInternal(parent->key[leftSibling], parent, curr);
@@ -803,7 +803,7 @@ int BplusTree::remove(int x)
 			{
 				curr->key[i] = rightNode->key[j];
 			}
-			curr->ptr[curr->size] = nullptr;
+			//curr->ptr[curr->size] = nullptr;
 			curr->size += rightNode->size;
 			curr->ptr[curr->size] = rightNode->ptr[rightNode->size];
 			if(storage->verbose)
@@ -947,7 +947,7 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 		for (int i = leftNode->size + 1, j = 0; j < curr->size + 1; j++)
 		{
 			leftNode->ptr[i] = curr->ptr[j];
-			curr->ptr[j] = nullptr;
+			//curr->ptr[j] = nullptr;
 		}
 		leftNode->size += curr->size + 1;
 		curr->size = 0;
@@ -964,7 +964,7 @@ void BplusTree::removeInternal(int x, Node *curr, Node *child)
 		for (int i = curr->size + 1, j = 0; j < rightNode->size + 1; j++)
 		{
 			curr->ptr[i] = rightNode->ptr[j];
-			rightNode->ptr[j] = nullptr;
+			//rightNode->ptr[j] = nullptr;
 		}
 		curr->size += rightNode->size + 1;
 		rightNode->size = 0;
