@@ -142,7 +142,7 @@ void experiment4() {
 
 void experiment5() {
 	std::cout << endl << "(Experiment 5)" << endl;
-	tree.remove(1000);
+	// tree.remove(1000);
 	Node* root = tree.getRoot();
 
 	int keys_deleted = 0;
