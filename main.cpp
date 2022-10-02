@@ -272,7 +272,7 @@ void parseData(int limit) {
 			if (firstLine)
 				firstLine = false;
 			else {
-				unsigned char tconst[10] = {};
+				unsigned char tconst[11] = {};
 				char rating[4] = {};
 				char* votes = nullptr;
 				int offset = 0;
