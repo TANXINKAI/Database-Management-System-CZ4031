@@ -114,8 +114,7 @@ Node::Node()
 	key = new int[MAX_KEYS]; // creating an array of length N/MAX_KEYS (Each node should have N keys)
 	addressBlock = new int[MAX_KEYS];
 	addressOffset = new int[MAX_KEYS];
-	ptr = new Node *[MAX_KEYS + 1]; // Whats the purpose of this? i thought the keys within the same node is in an array... if use ptr, shouldnt key = new Node[MAX_KEYS] or smth?
-	// MAX_KEYS + 1 because MAX_KEYS = number of keys. Pointer count = number of keys + 1. Hence MAX_KEYS + 1
+	ptr = new Node *[MAX_KEYS + 1]; // MAX_KEYS + 1 because pointer count = number of keys + 1. 
 	for (int i = 0; i < MAX_KEYS + 1; i++) // Initialize all ptrs to nullptr. Uninitialized pointers are problematic when trying to check for validity.
 		ptr[i] = nullptr;
 }
@@ -462,7 +461,7 @@ void BplusTree::rangequery(int lb, int hb)
 			{
 				if(keys[i] >= lb)
 				{
-					curr=(i-1 >=0 ? curr->ptr[i-1] : curr->ptr[i]); //Found lower bound node
+					curr= curr->ptr[i]; //Found lower bound node
 					nodesAccessed += 1;
 					foundLower = true;
 					break;
@@ -586,7 +585,7 @@ void BplusTree::insertInternal(int x, int block, int offset, Node *curr, Node *c
 		curr->size = (MAX_KEYS + 1) / 2;
 		newInternal->size = MAX_KEYS - (MAX_KEYS + 1) / 2;
 
-		for (i = 0, j = curr->size+1; i < newInternal->size + 1; i++, j++) // Assigning Left Sub tree? WHat about right sub tree? (Austin: This is for creating internal node, there is no left/right tree. See next 2 comments)
+		for (i = 0, j = curr->size+1; i < newInternal->size + 1; i++, j++) 
 		{
 			if (i < newInternal->size)
 			{
@@ -600,13 +599,13 @@ void BplusTree::insertInternal(int x, int block, int offset, Node *curr, Node *c
 		//free(tempBlock);
 		//free(tempOffset);
 		//free(tempPtr);
-		if (curr == root) // Need somewhere to Update the Height and Number of Nodes in B+ tree
+		if (curr == root) 
 		{
 			Node *newRoot = new Node;
 			newRoot->key[0] = curr->key[curr->size];
 			newRoot->addressBlock[0] = curr->addressBlock[curr->size];
 			newRoot->addressOffset[0] = curr->addressOffset[curr->size];
-			// Austin: Point the internal node pointers to left and right sub tree accordingly
+	
 			newRoot->ptr[0] = curr;
 			newRoot->ptr[1] = newInternal;
 			newRoot->IS_LEAFNODE = false;
@@ -976,7 +975,7 @@ int BplusTree::count_memory(Node *curr)
 	return retVal;
 }
 
-// Not sure why it is not working (Austin: Fixed)
+
 int BplusTree::count_nodes(Node *curr)
 {
 	int retVal = 1; // As long as we enter this method, count as 1 as we are iterating a node to be in this method (this is necessary to account for internal nodes).
