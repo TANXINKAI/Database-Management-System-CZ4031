@@ -462,7 +462,7 @@ void BplusTree::rangequery(int lb, int hb)
 			{
 				if(keys[i] >= lb)
 				{
-					curr=(i-1 >=0 ? curr->ptr[i-1] : curr->ptr[i]); //Found lower bound node
+					curr= curr->ptr[i]; //Found lower bound node
 					nodesAccessed += 1;
 					foundLower = true;
 					break;
