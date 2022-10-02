@@ -39,9 +39,6 @@ size_t Storage::getUsedStorageSize() {
 	// Total size of block index
 	total += (sizeof(intptr_t) * this->blockManager.getBlockCount());
 
-
-	//TODO: Total size of B+ tree?
-
 	return total;
 }
 
@@ -54,8 +51,6 @@ unsigned char* Storage::createBlock() {
 	if (this->blockManager.getBlockCount() + 1 > (this->storageSize / this->blockSize))
 		throw std::runtime_error("Unable to create new blocks as block capacity has been reached");
 
-
-	//TODO: Add some form of consideration/calculation that includes the size of B+ tree index. To check for space for index AND block
 	if (this->storageSize - this->getUsedStorageSize() < 2*blockSize)
 		throw std::runtime_error("Unable to create new data as disk capacity has surpassed threshold");
 
@@ -87,6 +82,7 @@ unsigned char* Storage::insertMovieInfo(MovieInfo mi) {
 	unsigned char* availableSpace = nullptr;
 	int blockCount = this->blockManager.getBlockCount();
 	//Loop through all existing blocks and find available space
+	
 	if (blockCount != 0) {
 		availableSpace = (unsigned char*)this->blockManager.getBlock(blockCount - 1);
 
@@ -94,6 +90,7 @@ unsigned char* Storage::insertMovieInfo(MovieInfo mi) {
 		if (this->blockManager.isFull())
 			availableSpace = nullptr;
 	}
+	
 	//No available space available (No existing blocks with allowance for new record)
 	if (availableSpace == nullptr){
 		availableSpace = (unsigned char*)this->createBlock();

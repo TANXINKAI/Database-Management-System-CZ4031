@@ -259,6 +259,7 @@ void parseData(int limit) {
 	auto timeStart = high_resolution_clock::now();
 	int dataCount = 0;
 	fstream file;
+
 	file.open(".\\data.tsv", ios::in);
 	
 	// file.open("data.tsv", ios::in);
